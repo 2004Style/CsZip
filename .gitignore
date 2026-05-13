@@ -1,0 +1,73 @@
+# Rust
+/target
+Cargo.lock
+**/*.rs.bk
+*.pdb
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.project
+.settings/
+.classpath
+.c9/
+*.launch
+.scala_dependencies
+.worksheet
+
+# IDE - VSCode specific
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/
+
+# IDE - PyCharm
+.idea/*
+*.iml
+
+# Testing
+/tests/temp/
+/tests/fixtures/*.mz
+
+# Fuzzing
+fuzz/artifacts/
+.artifacts/
+
+# Profiling
+perf.data
+perf.data.old
+flamegraph.svg
+*.profdata
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary
+*.tmp
+*.log
+.env
+.env.local
+
+# Distribution / Production
+dist/
+build/
+
+# Dependencies (opcional si no quieres cargo.lock versionado)
+# Cargo.lock
+
+# Benchmarks
+target/criterion/
+
+
+# Added by cargo
+#
+# already existing elements were commented out
+
+#/target

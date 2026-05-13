@@ -1,0 +1,76 @@
+    [package]
+name = "cszip"
+version = "0.1.0"
+edition = "2021"
+authors = ["Developer <dev@example.com>"]
+description = "High-performance lossless file compression tool with custom format (.cz)"
+license = "MIT"
+repository = "https://github.com/user/CsZip"
+documentation = "https://docs.rs/cszip"
+keywords = ["compression", "lz77", "streaming", "lossless"]
+categories = ["compression", "command-line-utilities"]
+readme = "README.md"
+
+[lib]
+name = "cszip"
+path = "src/lib.rs"
+
+[[bin]]
+name = "cszip"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4.4", features = ["derive"] }
+thiserror = "1.0"
+
+# Opcional: Progress bar
+indicatif = { version = "0.17", optional = true }
+
+[dev-dependencies]
+tempfile = "3.8"
+criterion = "0.5"
+rand = "0.8"
+
+[features]
+default = []
+progress = ["dep:indicatif"]
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"
+
+[profile.bench]
+inherits = "release"
+
+# Benchmarks
+[[bench]]
+name = "compress_throughput"
+harness = false
+
+[[bench]]
+name = "decompress_throughput"
+harness = false
+
+[[bench]]
+name = "compression_ratio"
+harness = false
+
+# Ejemplos
+[[example]]
+name = "basic_compress"
+path = "examples/basic_compress.rs"
+
+[[example]]
+name = "basic_decompress"
+path = "examples/basic_decompress.rs"
+
+[[example]]
+name = "streaming"
+path = "examples/streaming.rs"
+
+[[example]]
+name = "library_api"
+path = "examples/library_api.rs"

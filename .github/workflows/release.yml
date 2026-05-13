@@ -1,0 +1,235 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+-*'
+
+env:
+  CARGO_TERM_COLOR: always
+
+permissions:
+  contents: write
+
+jobs:
+  # Job 1: Compilar binarios para todas las plataformas
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Linux x86_64
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact_name: cszip
+            asset_name: cszip-linux-x86_64
+
+          # Linux x86_64 musl (estático)
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            artifact_name: cszip
+            asset_name: cszip-linux-x86_64-musl
+
+          # macOS Intel
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            artifact_name: cszip
+            asset_name: cszip-macos-x86_64
+
+          # macOS Apple Silicon
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            artifact_name: cszip
+            asset_name: cszip-macos-aarch64
+
+          # Windows x86_64
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact_name: cszip.exe
+            asset_name: cszip-windows-x86_64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install musl-tools (Linux musl)
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
+
+      - name: Build release binary
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Run tests
+        if: matrix.target != 'aarch64-apple-darwin'
+        run: cargo test --release --target ${{ matrix.target }}
+
+      - name: Create package directory
+        shell: bash
+        run: mkdir -p package
+
+      - name: Copy binary (Unix)
+        if: runner.os != 'Windows'
+        run: cp target/${{ matrix.target }}/release/${{ matrix.artifact_name }} package/
+
+      - name: Copy binary (Windows)
+        if: runner.os == 'Windows'
+        run: Copy-Item target/${{ matrix.target }}/release/${{ matrix.artifact_name }} package/
+
+      - name: Copy documentation
+        shell: bash
+        run: |
+          cp README.md package/
+          cp LICENSE package/
+
+      - name: Create tarball (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          cd package
+          tar -czvf ../${{ matrix.asset_name }}.tar.gz *
+
+      - name: Create zip (Windows)
+        if: runner.os == 'Windows'
+        run: Compress-Archive -Path package/* -DestinationPath ${{ matrix.asset_name }}.zip
+
+      - name: Upload artifact (Unix)
+        if: runner.os != 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset_name }}
+          path: ${{ matrix.asset_name }}.tar.gz
+
+      - name: Upload artifact (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset_name }}
+          path: ${{ matrix.asset_name }}.zip
+
+  # Job 2: Crear release en GitHub con todos los binarios
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Prepare release files
+        run: |
+          mkdir -p release
+          find artifacts -type f \( -name "*.tar.gz" -o -name "*.zip" \) -exec cp {} release/ \;
+          echo "Release files:"
+          ls -la release/
+
+      - name: Generate checksums
+        run: |
+          cd release
+          sha256sum * > checksums.sha256
+          cat checksums.sha256
+
+      - name: Get version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Check if prerelease
+        id: prerelease
+        run: |
+          if [[ "${{ steps.version.outputs.VERSION }}" == *"-"* ]]; then
+            echo "IS_PRERELEASE=true" >> $GITHUB_OUTPUT
+          else
+            echo "IS_PRERELEASE=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: CsZip ${{ steps.version.outputs.VERSION }}
+          draft: false
+          prerelease: ${{ steps.prerelease.outputs.IS_PRERELEASE }}
+          generate_release_notes: true
+          files: release/*
+          body: |
+            ## 📦 CsZip ${{ steps.version.outputs.VERSION }}
+            
+            ### 📥 Descargas
+            
+            | Plataforma | Arquitectura | Archivo | Notas |
+            |------------|--------------|---------|-------|
+            | **Linux** | x86_64 | `cszip-linux-x86_64.tar.gz` | Requiere glibc 2.17+ |
+            | **Linux** | x86_64 | `cszip-linux-x86_64-musl.tar.gz` | Binario estático, portable |
+            | **macOS** | Intel | `cszip-macos-x86_64.tar.gz` | macOS 10.12+ |
+            | **macOS** | Apple Silicon | `cszip-macos-aarch64.tar.gz` | macOS 11.0+ (M1/M2/M3) |
+            | **Windows** | x86_64 | `cszip-windows-x86_64.zip` | Windows 10+ |
+            
+            ### 🔐 Verificar Integridad
+            
+            ```bash
+            # Descargar checksums
+            curl -LO https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.VERSION }}/checksums.sha256
+            
+            # Verificar
+            sha256sum -c checksums.sha256
+            ```
+            
+            ### 🚀 Instalación Rápida
+            
+            **Linux/macOS:**
+            ```bash
+            # Descargar y extraer (ajustar nombre según tu sistema)
+            curl -LO https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.VERSION }}/cszip-linux-x86_64.tar.gz
+            tar -xzf cszip-linux-x86_64.tar.gz
+            sudo mv cszip /usr/local/bin/
+            cszip --version
+            ```
+            
+            **Windows (PowerShell):**
+            ```powershell
+            Invoke-WebRequest -Uri "https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.VERSION }}/cszip-windows-x86_64.zip" -OutFile cszip.zip
+            Expand-Archive cszip.zip -DestinationPath C:\cszip
+            # Añadir C:\cszip al PATH del sistema
+            ```
+            
+            ### 📚 Documentación
+            
+            - [Guía de Instalación](docs/INSTALL.md)
+            - [Manual de Uso](docs/USAGE.md)
+            - [Formato .cz](FORMAT.md)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Job 3: Publicar en crates.io (opcional)
+  publish-crates:
+    name: Publish to crates.io
+    needs: release
+    runs-on: ubuntu-latest
+    # Solo publicar releases estables (sin guiones en la versión)
+    if: ${{ !contains(github.ref, '-') }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Verify version matches tag
+        run: |
+          VERSION=$(grep '^version' Cargo.toml | head -1 | cut -d'"' -f2)
+          TAG=${GITHUB_REF#refs/tags/v}
+          if [ "$VERSION" != "$TAG" ]; then
+            echo "Version mismatch: Cargo.toml has $VERSION but tag is $TAG"
+            exit 1
+          fi
+
+      - name: Publish to crates.io
+        run: cargo publish --token ${{ secrets.CRATES_TOKEN }}
+        continue-on-error: true
