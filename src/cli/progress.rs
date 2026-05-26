@@ -180,7 +180,8 @@ impl ProgressBar {
         let filled = (percentage / 100.0 * self.config.width as f64) as usize;
         let empty = self.config.width.saturating_sub(filled);
 
-        let bar: String = std::iter::repeat('=').take(filled.saturating_sub(1))
+        let bar: String = std::iter::repeat('=')
+            .take(filled.saturating_sub(1))
             .chain(if filled > 0 { Some('>') } else { None })
             .chain(std::iter::repeat(' ').take(empty))
             .collect();
