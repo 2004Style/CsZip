@@ -39,6 +39,7 @@ mod error_kind_tests {
     }
 
     #[test]
+    #[allow(clippy::clone_on_copy)]
     fn test_error_kind_clone() {
         let kind = ErrorKind::InvalidMagicNumber;
         let cloned = kind.clone();
@@ -181,6 +182,7 @@ mod error_tests {
 // Tests de Result type alias
 // ============================================================================
 
+#[allow(clippy::unnecessary_literal_unwrap)]
 mod result_tests {
     use super::*;
     use cszip::error::Result;

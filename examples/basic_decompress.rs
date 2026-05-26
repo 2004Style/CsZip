@@ -32,8 +32,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     } else {
         // Quitar extensión .cz
         let input_str = input_path.to_string_lossy();
-        if input_str.ends_with(".cz") {
-            input_str[..input_str.len() - 3].to_string()
+        if let Some(stripped) = input_str.strip_suffix(".cz") {
+            stripped.to_string()
         } else {
             format!("{}.out", input_str)
         }
