@@ -60,6 +60,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@1.70.0
       - run: |
           cargo update -p half --precise 2.4.1
+          cargo update -p ppv-lite86 --precise 0.2.17
           cargo update -p quote --precise 1.0.37
           cargo update -p clap --precise 4.4.18
           cargo update -p clap_builder --precise 4.4.18
