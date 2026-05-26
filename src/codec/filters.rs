@@ -345,7 +345,7 @@ impl RleEncoder {
                 }
                 let byte = data[i + 1];
                 let count = data[i + 2] as usize;
-                output.extend(std::iter::repeat_n(byte, count));
+                output.extend(std::iter::repeat(byte).take(count));
                 i += 3;
             } else {
                 output.push(data[i]);

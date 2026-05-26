@@ -145,7 +145,7 @@ pub fn align_up(value: usize, alignment: usize) -> usize {
     if alignment == 0 {
         return value;
     }
-    value.div_ceil(alignment) * alignment
+    (value + alignment - 1) / alignment * alignment
 }
 
 #[cfg(test)]
