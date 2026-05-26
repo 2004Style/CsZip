@@ -68,6 +68,7 @@ impl Compressor {
 
         match self.algorithm {
             Algorithm::Store => self.compress_store(reader, writer),
+            Algorithm::Lz77Huffman => self.compress_lz77_huffman(reader, writer),
             _ => unreachable!(),
         }
     }
@@ -86,6 +87,7 @@ impl Compressor {
 
         match self.algorithm {
             Algorithm::Store => self.compress_block_store(input),
+            Algorithm::Lz77Huffman => self.compress_block_lz77_huffman(input),
             _ => unreachable!(),
         }
     }
@@ -122,7 +124,10 @@ impl Compressor {
 
             // Escribir datos sin modificar
             writer.write_all(data).map_err(|e| {
-                Error::new(ErrorKind::IoError, format!("Error escribiendo datos: {}", e))
+                Error::new(
+                    ErrorKind::IoError,
+                    format!("Error escribiendo datos: {}", e),
+                )
             })?;
 
             total_read += bytes_read as u64;
@@ -147,6 +152,64 @@ impl Compressor {
         Ok(CompressResult {
             original_size: input.len() as u64,
             compressed_size: input.len() as u64,
+            crc32,
+            crc64,
+            adler32,
+        })
+    }
+
+    /// Implementación LZ77+Huffman: copia con compresión
+    fn compress_lz77_huffman<R: Read, W: Write>(
+        &self,
+        reader: &mut R,
+        writer: &mut W,
+    ) -> Result<CompressResult, Error> {
+        let mut input = Vec::new();
+        reader
+            .read_to_end(&mut input)
+            .map_err(|e| Error::new(ErrorKind::IoError, format!("Error leyendo datos: {}", e)))?;
+
+        let lz77_comp = super::Lz77Compressor::with_level(self.level.value());
+        let lz77_bytes = lz77_comp.compress_to_bytes(&input);
+
+        let mut huff_enc = super::HuffmanEncoder::new();
+        let compressed = huff_enc.encode(&lz77_bytes)?;
+
+        writer.write_all(&compressed).map_err(|e| {
+            Error::new(
+                ErrorKind::IoError,
+                format!("Error escribiendo datos comprimidos: {}", e),
+            )
+        })?;
+
+        let crc32 = Crc32::compute(&input);
+        let crc64 = Crc64::compute(&input);
+        let adler32 = Adler32::compute(&input);
+
+        Ok(CompressResult {
+            original_size: input.len() as u64,
+            compressed_size: compressed.len() as u64,
+            crc32,
+            crc64,
+            adler32,
+        })
+    }
+
+    /// Implementación LZ77+Huffman para bloques en memoria
+    fn compress_block_lz77_huffman(&self, input: &[u8]) -> Result<CompressResult, Error> {
+        let lz77_comp = super::Lz77Compressor::with_level(self.level.value());
+        let lz77_bytes = lz77_comp.compress_to_bytes(input);
+
+        let mut huff_enc = super::HuffmanEncoder::new();
+        let compressed = huff_enc.encode(&lz77_bytes)?;
+
+        let crc32 = Crc32::compute(input);
+        let crc64 = Crc64::compute(input);
+        let adler32 = Adler32::compute(input);
+
+        Ok(CompressResult {
+            original_size: input.len() as u64,
+            compressed_size: compressed.len() as u64,
             crc32,
             crc64,
             adler32,
@@ -260,7 +323,7 @@ mod tests {
 
     #[test]
     fn test_compressor_unsupported_algorithm() {
-        let compressor = Compressor::new(Algorithm::Lz77Huffman, CompressionLevel::DEFAULT);
+        let compressor = Compressor::new(Algorithm::Lz4, CompressionLevel::DEFAULT);
         let input = b"test";
         let mut output = Vec::new();
 

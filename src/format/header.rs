@@ -59,11 +59,7 @@ impl Header {
     /// # Errores
     ///
     /// Retorna error si los parámetros están fuera de rango.
-    pub fn new(
-        compression_algo: u8,
-        block_size_log2: u16,
-        max_expansion: u16,
-    ) -> Result<Self> {
+    pub fn new(compression_algo: u8, block_size_log2: u16, max_expansion: u16) -> Result<Self> {
         Self::with_flags(compression_algo, block_size_log2, max_expansion, 0)
     }
 
@@ -89,7 +85,7 @@ impl Header {
         }
 
         // Validar tamaño de bloque
-        if block_size_log2 < MIN_BLOCK_SIZE_LOG2 || block_size_log2 > MAX_BLOCK_SIZE_LOG2 {
+        if !(MIN_BLOCK_SIZE_LOG2..=MAX_BLOCK_SIZE_LOG2).contains(&block_size_log2) {
             return Err(Error::new(
                 ErrorKind::InvalidBlockSize,
                 format!(
@@ -100,7 +96,7 @@ impl Header {
         }
 
         // Validar expansión
-        if max_expansion < MIN_EXPANSION || max_expansion > MAX_EXPANSION {
+        if !(MIN_EXPANSION..=MAX_EXPANSION).contains(&max_expansion) {
             return Err(Error::new(
                 ErrorKind::InvalidExpansionLimit,
                 format!(
@@ -198,7 +194,7 @@ impl Header {
         }
 
         // Validar tamaño de bloque
-        if block_size_log2 < MIN_BLOCK_SIZE_LOG2 || block_size_log2 > MAX_BLOCK_SIZE_LOG2 {
+        if !(MIN_BLOCK_SIZE_LOG2..=MAX_BLOCK_SIZE_LOG2).contains(&block_size_log2) {
             return Err(Error::new(
                 ErrorKind::InvalidBlockSize,
                 format!("Block size log2 {} fuera de rango", block_size_log2),
@@ -206,7 +202,7 @@ impl Header {
         }
 
         // Validar expansión
-        if max_expansion < MIN_EXPANSION || max_expansion > MAX_EXPANSION {
+        if !(MIN_EXPANSION..=MAX_EXPANSION).contains(&max_expansion) {
             return Err(Error::new(
                 ErrorKind::InvalidExpansionLimit,
                 format!("Max expansion {} fuera de rango", max_expansion),
@@ -251,9 +247,9 @@ impl Header {
 
     /// Escribir header a un stream
     pub fn write<W: Write>(&self, writer: &mut W) -> Result<()> {
-        writer.write_all(&self.to_bytes()).map_err(|e| {
-            Error::new(ErrorKind::Io, format!("Error escribiendo header: {}", e))
-        })
+        writer
+            .write_all(&self.to_bytes())
+            .map_err(|e| Error::new(ErrorKind::Io, format!("Error escribiendo header: {}", e)))
     }
 
     /// Obtener tamaño de bloque en bytes

@@ -38,43 +38,27 @@ fn run(cli: Cli) -> Result<(), Error> {
             level,
             force,
             crc64,
-        } => {
-            commands::compress(
-                &input,
-                output.as_deref(),
-                algorithm,
-                level,
-                force,
-                crc64,
-                verbosity,
-            )
-        }
+        } => commands::compress(
+            &input,
+            output.as_deref(),
+            algorithm,
+            level,
+            force,
+            crc64,
+            verbosity,
+        ),
 
         Commands::Decompress {
             input,
             output,
             force,
             no_verify,
-        } => {
-            commands::decompress(
-                &input,
-                output.as_deref(),
-                force,
-                no_verify,
-                verbosity,
-            )
-        }
+        } => commands::decompress(&input, output.as_deref(), force, no_verify, verbosity),
 
-        Commands::Info { input, detailed } => {
-            commands::info(&input, detailed, verbosity)
-        }
+        Commands::Info { input, detailed } => commands::info(&input, detailed, verbosity),
 
-        Commands::Verify { input } => {
-            commands::verify(&input, verbosity)
-        }
+        Commands::Verify { input } => commands::verify(&input, verbosity),
 
-        Commands::List { input } => {
-            commands::list(&input, verbosity)
-        }
+        Commands::List { input } => commands::list(&input, verbosity),
     }
 }

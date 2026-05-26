@@ -62,6 +62,7 @@ impl Decompressor {
 
         match self.algorithm {
             Algorithm::Store => self.decompress_store(reader, writer, expected_size),
+            Algorithm::Lz77Huffman => self.decompress_lz77_huffman(reader, writer, expected_size),
             _ => unreachable!(),
         }
     }
@@ -80,6 +81,7 @@ impl Decompressor {
 
         match self.algorithm {
             Algorithm::Store => self.decompress_block_store(input),
+            Algorithm::Lz77Huffman => self.decompress_block_lz77_huffman(input),
             _ => unreachable!(),
         }
     }
@@ -174,7 +176,10 @@ impl Decompressor {
 
             // Escribir datos
             writer.write_all(data).map_err(|e| {
-                Error::new(ErrorKind::IoError, format!("Error escribiendo datos: {}", e))
+                Error::new(
+                    ErrorKind::IoError,
+                    format!("Error escribiendo datos: {}", e),
+                )
             })?;
 
             total_read += bytes_read as u64;
@@ -212,6 +217,75 @@ impl Decompressor {
         Ok(DecompressResult {
             compressed_size: input.len() as u64,
             decompressed_size: input.len() as u64,
+            crc32,
+            crc64,
+            adler32,
+        })
+    }
+
+    /// Implementación LZ77+Huffman: copia con descompresión
+    fn decompress_lz77_huffman<R: Read, W: Write>(
+        &self,
+        reader: &mut R,
+        writer: &mut W,
+        expected_size: Option<u64>,
+    ) -> Result<DecompressResult, Error> {
+        let mut compressed = Vec::new();
+        reader.read_to_end(&mut compressed).map_err(|e| {
+            Error::new(
+                ErrorKind::IoError,
+                format!("Error leyendo datos comprimidos: {}", e),
+            )
+        })?;
+
+        let lz77_bytes = super::HuffmanDecoder::decode(&compressed)?;
+        let decompressed = super::Lz77Decompressor::decompress(&lz77_bytes)?;
+
+        if let Some(expected) = expected_size {
+            if decompressed.len() as u64 != expected {
+                return Err(Error::new(
+                    ErrorKind::InvalidData,
+                    format!(
+                        "Tamaño descomprimido incorrecto: esperado {}, obtenido {}",
+                        expected,
+                        decompressed.len()
+                    ),
+                ));
+            }
+        }
+
+        writer.write_all(&decompressed).map_err(|e| {
+            Error::new(
+                ErrorKind::IoError,
+                format!("Error escribiendo datos descomprimidos: {}", e),
+            )
+        })?;
+
+        let crc32 = Crc32::compute(&decompressed);
+        let crc64 = Crc64::compute(&decompressed);
+        let adler32 = Adler32::compute(&decompressed);
+
+        Ok(DecompressResult {
+            compressed_size: compressed.len() as u64,
+            decompressed_size: decompressed.len() as u64,
+            crc32,
+            crc64,
+            adler32,
+        })
+    }
+
+    /// Implementación LZ77+Huffman para bloques en memoria
+    fn decompress_block_lz77_huffman(&self, input: &[u8]) -> Result<DecompressResult, Error> {
+        let lz77_bytes = super::HuffmanDecoder::decode(input)?;
+        let decompressed = super::Lz77Decompressor::decompress(&lz77_bytes)?;
+
+        let crc32 = Crc32::compute(&decompressed);
+        let crc64 = Crc64::compute(&decompressed);
+        let adler32 = Adler32::compute(&decompressed);
+
+        Ok(DecompressResult {
+            compressed_size: input.len() as u64,
+            decompressed_size: decompressed.len() as u64,
             crc32,
             crc64,
             adler32,

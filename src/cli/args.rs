@@ -153,7 +153,7 @@ impl AlgorithmArg {
 
     /// Indica si está implementado
     pub fn is_implemented(self) -> bool {
-        matches!(self, AlgorithmArg::Store)
+        matches!(self, AlgorithmArg::Store | AlgorithmArg::Lz77)
     }
 }
 
@@ -340,7 +340,7 @@ mod tests {
     #[test]
     fn test_algorithm_implemented() {
         assert!(AlgorithmArg::Store.is_implemented());
-        assert!(!AlgorithmArg::Lz77.is_implemented());
+        assert!(AlgorithmArg::Lz77.is_implemented());
         assert!(!AlgorithmArg::Lz4.is_implemented());
         assert!(!AlgorithmArg::Lzma.is_implemented());
         assert!(!AlgorithmArg::Deflate.is_implemented());

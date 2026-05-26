@@ -51,7 +51,7 @@ impl FilterType {
 pub trait Filter {
     /// Aplicar filtro (preprocesamiento)
     fn apply(&self, data: &[u8]) -> Vec<u8>;
-    
+
     /// Revertir filtro (postprocesamiento)
     fn revert(&self, data: &[u8]) -> Result<Vec<u8>>;
 }
@@ -259,7 +259,7 @@ impl MtfTransform {
         for &byte in data {
             let pos = table.iter().position(|&b| b == byte).unwrap();
             output.push(pos as u8);
-            
+
             // Mover al frente
             table.remove(pos);
             table.insert(0, byte);
@@ -276,7 +276,7 @@ impl MtfTransform {
         for &pos in data {
             let byte = table[pos as usize];
             output.push(byte);
-            
+
             // Mover al frente
             table.remove(pos as usize);
             table.insert(0, byte);
@@ -345,7 +345,7 @@ impl RleEncoder {
                 }
                 let byte = data[i + 1];
                 let count = data[i + 2] as usize;
-                output.extend(std::iter::repeat(byte).take(count));
+                output.extend(std::iter::repeat_n(byte, count));
                 i += 3;
             } else {
                 output.push(data[i]);
@@ -376,10 +376,10 @@ mod tests {
     fn test_delta_filter_roundtrip() {
         let filter = DeltaFilter;
         let input = vec![10, 12, 15, 14, 20, 25];
-        
+
         let filtered = filter.apply(&input);
         let reverted = filter.revert(&filtered).unwrap();
-        
+
         assert_eq!(reverted, input);
     }
 
@@ -394,7 +394,7 @@ mod tests {
     fn test_delta_filter_sequential() {
         let filter = DeltaFilter;
         let input: Vec<u8> = (0..10).collect();
-        
+
         let filtered = filter.apply(&input);
         // Después del primer byte, todos deberían ser 1
         assert_eq!(filtered[0], 0);
@@ -406,46 +406,39 @@ mod tests {
     #[test]
     fn test_up_filter_roundtrip() {
         let filter = UpFilter::new(4);
-        let input = vec![
-            1, 2, 3, 4,
-            2, 3, 4, 5,
-            3, 4, 5, 6,
-        ];
-        
+        let input = vec![1, 2, 3, 4, 2, 3, 4, 5, 3, 4, 5, 6];
+
         let filtered = filter.apply(&input);
         let reverted = filter.revert(&filtered).unwrap();
-        
+
         assert_eq!(reverted, input);
     }
 
     #[test]
     fn test_average_filter_roundtrip() {
         let filter = AverageFilter::new(4);
-        let input = vec![
-            10, 20, 30, 40,
-            15, 25, 35, 45,
-        ];
-        
+        let input = vec![10, 20, 30, 40, 15, 25, 35, 45];
+
         let filtered = filter.apply(&input);
         let reverted = filter.revert(&filtered).unwrap();
-        
+
         assert_eq!(reverted, input);
     }
 
     #[test]
     fn test_mtf_roundtrip() {
         let input = b"hello world";
-        
+
         let transformed = MtfTransform::apply(input);
         let reverted = MtfTransform::revert(&transformed);
-        
+
         assert_eq!(reverted, input);
     }
 
     #[test]
     fn test_mtf_repeated() {
         let input = vec![b'a'; 10];
-        
+
         let transformed = MtfTransform::apply(&input);
         // Primer 'a' tiene índice alto, resto son 0
         assert_eq!(transformed[0], b'a' as u8);
@@ -457,30 +450,30 @@ mod tests {
     #[test]
     fn test_rle_roundtrip() {
         let input = b"aaaaabbbbccc".to_vec();
-        
+
         let encoded = RleEncoder::encode(&input);
         let decoded = RleEncoder::decode(&encoded).unwrap();
-        
+
         assert_eq!(decoded, input);
     }
 
     #[test]
     fn test_rle_no_repeats() {
         let input = b"abcdef".to_vec();
-        
+
         let encoded = RleEncoder::encode(&input);
         let decoded = RleEncoder::decode(&encoded).unwrap();
-        
+
         assert_eq!(decoded, input);
     }
 
     #[test]
     fn test_rle_long_run() {
         let input = vec![0x42; 200];
-        
+
         let encoded = RleEncoder::encode(&input);
         let decoded = RleEncoder::decode(&encoded).unwrap();
-        
+
         assert_eq!(decoded, input);
         // Debería ser más corto que el original
         assert!(encoded.len() < input.len());
@@ -497,10 +490,10 @@ mod tests {
     fn test_none_filter() {
         let filter = NoneFilter;
         let input = b"test data";
-        
+
         let filtered = filter.apply(input);
         let reverted = filter.revert(&filtered).unwrap();
-        
+
         assert_eq!(filtered, input);
         assert_eq!(reverted, input);
     }

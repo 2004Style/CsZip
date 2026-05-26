@@ -1,62 +1,63 @@
-﻿# CsZip
+# CsZip
 
-Compresor de archivos sin pérdida, rápido y seguro, escrito en Rust.
-Formato binario propio `.cz` inspirado en XZ Utils y Zstd.
+Compresor de archivos sin pérdida, rápido, seguro y altamente portable, escrito en Rust.
+Posee un formato binario propio `.cz` (basado en bloques con compresión nativa `LZ77+Huffman`) e integra soporte transparente de compresión/descompresión para archivos `.zip` y descompresión para archivos `.rar`.
 
-```
-cszip compress datos.bin         # datos.bin → datos.bin.cz
-cszip decompress datos.bin.cz    # datos.bin.cz → datos.bin
-cszip verify datos.bin.cz        # verificar integridad
-cszip info datos.bin.cz          # ver metadata
+```bash
+cszip compress datos.bin         # datos.bin → datos.bin.cz (con LZ77+Huffman)
+cszip compress datos.bin -o d.zip # datos.bin → d.zip (formato ZIP estándar)
+cszip decompress datos.bin.cz    # descomprimir formato .cz
+cszip decompress backup.zip      # descomprimir formato .zip nativamente
+cszip decompress backup.rar      # extraer formato .rar (delegando en unrar de sistema)
+cszip verify datos.bin.cz        # verificar integridad (checksums del formato .cz)
+cszip info datos.bin.cz          # ver metadata detallada
 ```
 
 ---
 
 ## Características
 
-- **Rápido** — compresión ~500 MiB/s, descompresión ~600 MiB/s (STORE)
-- **Seguro** — CRC-32, CRC-64, ADLER-32 en cada bloque; protección anti-zip-bomb
-- **Streaming** — procesa archivos de cualquier tamaño sin cargar todo en memoria
-- **Multiplataforma** — Linux, macOS (Intel + Apple Silicon), Windows
+- **Compresión Nativa** — Algoritmo `LZ77+Huffman` de alto rendimiento incorporado directamente en el núcleo de la herramienta.
+- **Formatos Externos** — Integración nativa de lectura/escritura de `.zip` y extracción de `.rar` (delegación segura en `unrar` de sistema).
+- **Seguro** — Verificación redundante con CRC-32, CRC-64 y ADLER-32 a nivel de bloque e integridad global; protección activa contra ataques de denegación de servicio (*zip bombs*).
+- **Streaming** — E/S bufferizada y procesamiento por bloques que mantiene el uso de memoria constante, permitiendo procesar archivos de gigabytes en hardware limitado.
+- **Portabilidad Universal** — Totalmente automatizado para Linux (soporte multiplataforma e instaladores para Ubuntu, Debian, Mint, Kali, Fedora, RHEL y Arch Linux), macOS y Windows.
+
+---
 
 ## Instalar
 
-### Binarios pre-compilados
+### Método Automatizado por Script (Recomendado)
 
-Descarga desde [GitHub Releases](https://github.com/tu-usuario/cszip/releases/latest):
-
-| Sistema | Archivo |
-|---------|---------|
-| Linux x86_64 | `cszip-linux-x86_64.tar.gz` |
-| Linux x86_64 (estático) | `cszip-linux-x86_64-musl.tar.gz` |
-| macOS Intel | `cszip-macos-x86_64.tar.gz` |
-| macOS Apple Silicon | `cszip-macos-aarch64.tar.gz` |
-| Windows x86_64 | `cszip-windows-x86_64.zip` |
-
+**En Linux / macOS (POSIX):**
 ```bash
-# Linux/macOS
-curl -LO https://github.com/tu-usuario/cszip/releases/latest/download/cszip-linux-x86_64.tar.gz
-tar -xzf cszip-linux-x86_64.tar.gz
-sudo mv cszip /usr/local/bin/
+curl -fsSL https://raw.githubusercontent.com/user/CsZip/main/install.sh | sh
 ```
 
-### Compilar desde fuente
-
-```bash
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh  # instalar Rust
-git clone https://github.com/tu-usuario/cszip.git
-cd cszip
-cargo build --release
-# binario en target/release/cszip
+**En Windows (PowerShell):**
+```powershell
+powershell -ExecutionPolicy Bypass -Command "Invoke-Expression (Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/user/CsZip/main/install.ps1' -UseBasicParsing).Content"
 ```
 
-Compilación optimizada para tu CPU:
+### Compilar desde fuente (Desarrolladores)
 
+**En Linux / macOS (POSIX):**
 ```bash
-RUSTFLAGS="-C target-cpu=native" cargo build --release
+# Inicializa el entorno e instala dependencias del sistema y de Rust
+./scripts/dev.sh
+
+# Compila y empaqueta en dist/
+./scripts/build.sh
 ```
 
-Guía completa: [docs/INSTALL.md](docs/INSTALL.md)
+**En Windows (PowerShell):**
+```powershell
+# Inicializa el entorno de Windows
+powershell -ExecutionPolicy Bypass -File .\scripts\dev.ps1
+
+# Compila y empaqueta para Windows
+powershell -ExecutionPolicy Bypass -File .\scripts\build.ps1
+```
 
 ---
 
@@ -66,42 +67,34 @@ Guía completa: [docs/INSTALL.md](docs/INSTALL.md)
 
 | Comando | Alias | Descripción |
 |---------|-------|-------------|
-| `cszip compress <archivo>` | `cszip c` | Comprimir archivo |
-| `cszip decompress <archivo.cz>` | `cszip d` | Descomprimir archivo |
-| `cszip verify <archivo.cz>` | `cszip v` | Verificar integridad |
-| `cszip info <archivo.cz>` | `cszip i` | Mostrar información |
-| `cszip list <archivo.cz>` | `cszip l` | Listar bloques |
+| `cszip compress <archivo>` | `cszip c` | Comprimir archivo (autodetecta extensión `.zip` si se especifica `-o`) |
+| `cszip decompress <archivo.cz/.zip/.rar>` | `cszip d` | Descomprimir archivo (CZ nativo, ZIP nativo o RAR mediante unrar) |
+| `cszip verify <archivo.cz>` | `cszip v` | Verificar integridad del archivo `.cz` |
+| `cszip info <archivo.cz>` | `cszip i` | Mostrar información detallada de bloques de archivo `.cz` |
+| `cszip list <archivo.cz>` | `cszip l` | Listar tabla de bloques y ratios de compresión |
 
 ### Opciones de compresión
 
 ```bash
-cszip compress -l 9 archivo.txt          # nivel máximo (0-9)
-cszip compress -o backup.cz archivo.txt  # nombre de salida personalizado
-cszip compress -f archivo.txt            # sobrescribir si existe
-cszip compress --crc64 datos.bin         # usar CRC-64 en vez de CRC-32
+cszip compress -l 9 archivo.txt          # Nivel máximo (0-9)
+cszip compress -a lz77-huffman datos.bin # Usar LZ77+Huffman explícitamente (por defecto)
+cszip compress -o backup.zip datos.bin   # Comprimir a archivo zip estándar
+cszip compress -f archivo.txt            # Sobrescribir si el archivo destino existe
 ```
 
 ### Opciones de descompresión
 
 ```bash
-cszip decompress -o salida.txt archivo.cz  # nombre de salida
-cszip decompress -f archivo.cz             # sobrescribir
-cszip decompress --no-verify archivo.cz    # saltar verificación (más rápido)
-```
-
-### Inspección
-
-```bash
-cszip info archivo.cz       # resumen del archivo
-cszip info -d archivo.cz    # detalle por bloque
-cszip list -v archivo.cz    # tabla de bloques con ratios
+cszip decompress archivo.cz -o salida.txt # Nombre de salida personalizado
+cszip decompress -f backup.zip            # Sobrescribir archivos al extraer ZIP
+cszip decompress --no-verify archivo.cz    # Saltar verificación de checksums (más rápido)
 ```
 
 Manual completo: [docs/USAGE.md](docs/USAGE.md)
 
 ---
 
-## Formato .cz
+## Estructura del Formato .cz
 
 ```
 ┌─────────────────────────────────┐
@@ -115,61 +108,27 @@ Manual completo: [docs/USAGE.md](docs/USAGE.md)
 └─────────────────────────────────┘
 ```
 
-| Campo | Valor |
-|-------|-------|
-| Extensión | `.cz` |
-| Endianness | Big-endian |
-| Bloque máximo | 64 KB |
-| Checksums | CRC-32, CRC-64, ADLER-32 |
-| Algoritmos | STORE (0), LZ77+Huffman (1), LZ4 (2), LZMA (3), DEFLATE (4) |
-
 Especificación completa: [FORMAT.md](FORMAT.md)
 
 ---
 
-## Arquitectura
+## Arquitectura del Proyecto
 
 ```
 src/
-├── lib.rs          API pública
-├── main.rs         CLI (clap)
-├── error.rs        Tipos de error con códigos numéricos
-├── utils.rs        Helpers (format_size, throughput, etc.)
-├── cli.rs          Módulo CLI (args, commands, progress)
-├── cli/
-│   ├── args.rs     Argumentos y subcomandos
-│   ├── commands.rs Lógica de cada comando
-│   └── progress.rs Barra de progreso
-├── codec.rs        Módulo codecs (Algorithm, CompressionLevel)
-├── codec/
-│   ├── compressor.rs   Motor de compresión
-│   ├── decompressor.rs Motor de descompresión
-│   ├── lz77.rs         LZ77 con ventana deslizante
-│   ├── huffman.rs      Codificación Huffman
-│   └── filters.rs      Filtros (delta, RLE, MTF, BWT)
-├── format.rs       Módulo formato (re-exports)
-├── format/
-│   ├── header.rs    File Header (16 bytes)
-│   ├── block.rs     Block Header (12 bytes) + Footer (12 bytes)
-│   ├── checksum.rs  CRC-32, CRC-64, ADLER-32
-│   └── constants.rs Valores fijos del formato
-├── io.rs           Módulo I/O (re-exports)
-└── io/
-    ├── reader.rs    CzReader — leer archivos .cz
-    ├── writer.rs    CzWriter — crear archivos .cz
-    └── streaming.rs API de streaming con progreso
-```
-
----
-
-## Desarrollo
-
-```bash
-cargo test --all           # 334 tests
-cargo bench                # benchmarks
-cargo clippy --all-targets # linter
-cargo fmt --check          # formato
-cargo doc --no-deps --open # documentación API
+├── lib.rs          API pública de la librería
+├── main.rs         Punto de entrada CLI (clap)
+├── error.rs        Definición y códigos de error robustos
+├── utils.rs        Funciones de formato, tamaño y utilidades
+├── cli/            Módulos para interfaz de línea de comandos
+│   └── commands.rs Intercepción y delegación (CZ, ZIP y RAR)
+├── codec/          Motores de compresión
+│   ├── lz77.rs     Algoritmo LZ77 nativo
+│   ├── huffman.rs  Codificador de Huffman nativo
+│   ├── compressor.rs   Flujo de compresión de bloques
+│   └── decompressor.rs Flujo de descompresión de bloques
+└── utils/
+    └── archive.rs  Operaciones nativas ZIP y wrapper CLI para unrar (RAR)
 ```
 
 ---
@@ -180,26 +139,12 @@ cargo doc --no-deps --open # documentación API
 - [x] Compresión/descompresión STORE
 - [x] CLI completa (compress, decompress, verify, info, list)
 - [x] Streaming para archivos grandes
-- [x] Suite de 334 tests
-- [ ] LZ77 + Huffman (compresión real)
-- [ ] LZ4-style (ultra-rápido)
-- [ ] SIMD / multi-thread
-- [ ] LZMA, DEFLATE
-- [ ] Publicación en crates.io
-
----
-
-## CI/CD (GitHub Actions)
-
-Al pushear un tag `v*` (ej: `git tag v0.1.1 && git push origin v0.1.1`), GitHub Actions automáticamente:
-
-1. Compila binarios para Linux, macOS y Windows
-2. Ejecuta tests en cada plataforma
-3. Crea un Release en GitHub con todos los binarios
-4. Genera checksums SHA-256
-5. Publica en crates.io (solo releases estables)
-
-Ver [docs/RELEASING.md](docs/RELEASING.md) para detalles.
+- [x] Suite de tests completa (>330 tests)
+- [x] Integración de compresión real `LZ77 + Huffman`
+- [x] Soporte para formatos externos `.zip` (nativo) y `.rar` (extracción vía unrar)
+- [x] Scripts automatizados universales para desarrolladores y usuarios finales (POSIX + PowerShell)
+- [ ] Paralelización multi-hilo
+- [ ] Compresión estilo LZ4 y LZMA
 
 ---
 
@@ -207,15 +152,12 @@ Ver [docs/RELEASING.md](docs/RELEASING.md) para detalles.
 
 | Documento | Descripción |
 |-----------|-------------|
-| [docs/INSTALL.md](docs/INSTALL.md) | Instalación (Linux/macOS/Windows) |
-| [docs/USAGE.md](docs/USAGE.md) | Manual de uso completo |
-| [docs/RELEASING.md](docs/RELEASING.md) | Crear releases con binarios |
-| [docs/TESTING.md](docs/TESTING.md) | Testing y desarrollo local |
-| [FORMAT.md](FORMAT.md) | Especificación del formato binario |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Arquitectura del código |
-| [DEVELOPMENT.md](DEVELOPMENT.md) | Guía para desarrolladores |
-| [docs/API.md](docs/API.md) | Documentación de la API |
-| [docs/BENCHMARKS.md](docs/BENCHMARKS.md) | Benchmarks |
+| [docs/INSTALL.md](docs/INSTALL.md) | Guía de instalación en múltiples distribuciones y Windows |
+| [docs/USAGE.md](docs/USAGE.md) | Manual de uso completo y comandos para ZIP/RAR |
+| [docs/TESTING.md](docs/TESTING.md) | Suite de pruebas y desarrollo local |
+| [FORMAT.md](FORMAT.md) | Especificación física del formato binario `.cz` |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Arquitectura modular del código de Rust |
+| [DEVELOPMENT.md](DEVELOPMENT.md) | Guía de fases de desarrollo e hitos |
 
 ---
 

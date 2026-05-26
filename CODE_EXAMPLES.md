@@ -1,4 +1,4 @@
-﻿# 📚 Guía de Código - CsZip
+# 📚 Guía de Código - CsZip
 
 **Ejemplos de implementación rápida para cada módulo**
 
@@ -591,18 +591,18 @@ fn handle_list(file: &std::path::Path, verbose: bool) -> CsZip::Result<()> {
 
 ## ✅ Checklist por Módulo
 
-- [ ] error.rs compile
-- [ ] format/constants.rs compile
-- [ ] format/header.rs read/write roundtrip
-- [ ] format/block.rs read/write roundtrip
-- [ ] format/checksum.rs CRC correcto
-- [ ] codec/mod.rs STORE funciona
-- [ ] io/reader.rs read_exact funciona
-- [ ] io/writer.rs write_all funciona
-- [ ] main.rs compilación
-- [ ] Tests: cargo test
-- [ ] No warnings: cargo clippy
-- [ ] Formato: cargo fmt
+- [x] error.rs compile
+- [x] format/constants.rs compile
+- [x] format/header.rs read/write roundtrip
+- [x] format/block.rs read/write roundtrip
+- [x] format/checksum.rs CRC correcto
+- [x] codec/mod.rs STORE funciona
+- [x] io/reader.rs read_exact funciona
+- [x] io/writer.rs write_all funciona
+- [x] main.rs compilación
+- [x] Tests: cargo test
+- [x] No warnings: cargo clippy
+- [x] Formato: cargo fmt
 
 ---
 

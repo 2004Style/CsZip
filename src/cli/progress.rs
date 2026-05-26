@@ -6,12 +6,13 @@
 use std::io::{self, Write};
 use std::time::{Duration, Instant};
 
-use crate::utils::{format_size, format_duration, format_throughput, throughput};
+use crate::utils::{format_duration, format_size, format_throughput, throughput};
 
 /// Estilo de la barra de progreso
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum ProgressStyle {
     /// Barra simple: [=====>    ] 50%
+    #[default]
     Bar,
     /// Spinner para operaciones sin tamaño conocido
     Spinner,
@@ -21,12 +22,6 @@ pub enum ProgressStyle {
     Detailed,
     /// Sin salida visual
     Hidden,
-}
-
-impl Default for ProgressStyle {
-    fn default() -> Self {
-        Self::Bar
-    }
 }
 
 /// Configuración de la barra de progreso
@@ -119,7 +114,10 @@ impl ProgressBar {
 
     /// Crear barra oculta (sin salida)
     pub fn hidden() -> Self {
-        Self::with_config(None, ProgressConfig::default().with_style(ProgressStyle::Hidden))
+        Self::with_config(
+            None,
+            ProgressConfig::default().with_style(ProgressStyle::Hidden),
+        )
     }
 
     /// Establecer progreso absoluto
@@ -182,14 +180,18 @@ impl ProgressBar {
         let filled = (percentage / 100.0 * self.config.width as f64) as usize;
         let empty = self.config.width.saturating_sub(filled);
 
-        let bar: String = std::iter::repeat('=').take(filled.saturating_sub(1))
+        let bar: String = std::iter::repeat_n('=', filled.saturating_sub(1))
             .chain(if filled > 0 { Some('>') } else { None })
-            .chain(std::iter::repeat(' ').take(empty))
+            .chain(std::iter::repeat_n(' ', empty))
             .collect();
 
         format!(
             "{}[{}] {:5.1}% {}",
-            if self.config.prefix.is_empty() { String::new() } else { format!("{} ", self.config.prefix) },
+            if self.config.prefix.is_empty() {
+                String::new()
+            } else {
+                format!("{} ", self.config.prefix)
+            },
             bar,
             percentage,
             self.speed_string()
@@ -204,7 +206,11 @@ impl ProgressBar {
 
         format!(
             "{}{} {} {}",
-            if self.config.prefix.is_empty() { String::new() } else { format!("{} ", self.config.prefix) },
+            if self.config.prefix.is_empty() {
+                String::new()
+            } else {
+                format!("{} ", self.config.prefix)
+            },
             frame,
             format_size(self.current),
             self.speed_string()
@@ -215,7 +221,11 @@ impl ProgressBar {
     fn render_percentage(&self) -> String {
         format!(
             "{}{:5.1}%",
-            if self.config.prefix.is_empty() { String::new() } else { format!("{} ", self.config.prefix) },
+            if self.config.prefix.is_empty() {
+                String::new()
+            } else {
+                format!("{} ", self.config.prefix)
+            },
             self.percentage()
         )
     }
@@ -227,7 +237,8 @@ impl ProgressBar {
 
         let mut parts = vec![
             format!("{:5.1}%", self.percentage()),
-            format!("{}/{}", 
+            format!(
+                "{}/{}",
                 format_size(self.current),
                 self.total.map_or("?".to_string(), format_size)
             ),
@@ -237,7 +248,10 @@ impl ProgressBar {
             parts.push(self.speed_string());
         }
 
-        parts.push(format!("Elapsed: {}", format_duration(elapsed.as_millis() as u64)));
+        parts.push(format!(
+            "Elapsed: {}",
+            format_duration(elapsed.as_millis() as u64)
+        ));
 
         if self.config.show_eta {
             if let Some(eta) = eta {
@@ -247,7 +261,11 @@ impl ProgressBar {
 
         format!(
             "{}{}",
-            if self.config.prefix.is_empty() { String::new() } else { format!("{} ", self.config.prefix) },
+            if self.config.prefix.is_empty() {
+                String::new()
+            } else {
+                format!("{} ", self.config.prefix)
+            },
             parts.join(" | ")
         )
     }
@@ -344,7 +362,10 @@ pub fn progress_bar(total: u64) -> ProgressBar {
 
 /// Crear spinner
 pub fn spinner() -> ProgressBar {
-    ProgressBar::with_config(None, ProgressConfig::default().with_style(ProgressStyle::Spinner))
+    ProgressBar::with_config(
+        None,
+        ProgressConfig::default().with_style(ProgressStyle::Spinner),
+    )
 }
 
 /// Macro para crear barra con mensaje
@@ -370,16 +391,20 @@ mod tests {
 
     #[test]
     fn test_progress_bar_set() {
-        let mut pb = ProgressBar::with_config(Some(100), 
-            ProgressConfig::default().with_style(ProgressStyle::Hidden));
+        let mut pb = ProgressBar::with_config(
+            Some(100),
+            ProgressConfig::default().with_style(ProgressStyle::Hidden),
+        );
         pb.set(50);
         assert_eq!(pb.current, 50);
     }
 
     #[test]
     fn test_progress_bar_inc() {
-        let mut pb = ProgressBar::with_config(Some(100),
-            ProgressConfig::default().with_style(ProgressStyle::Hidden));
+        let mut pb = ProgressBar::with_config(
+            Some(100),
+            ProgressConfig::default().with_style(ProgressStyle::Hidden),
+        );
         pb.inc(10);
         pb.inc(20);
         assert_eq!(pb.current, 30);
@@ -387,24 +412,30 @@ mod tests {
 
     #[test]
     fn test_progress_bar_percentage() {
-        let mut pb = ProgressBar::with_config(Some(100),
-            ProgressConfig::default().with_style(ProgressStyle::Hidden));
+        let mut pb = ProgressBar::with_config(
+            Some(100),
+            ProgressConfig::default().with_style(ProgressStyle::Hidden),
+        );
         pb.set(50);
         assert_eq!(pb.percentage(), 50.0);
     }
 
     #[test]
     fn test_progress_bar_percentage_zero_total() {
-        let mut pb = ProgressBar::with_config(Some(0),
-            ProgressConfig::default().with_style(ProgressStyle::Hidden));
+        let mut pb = ProgressBar::with_config(
+            Some(0),
+            ProgressConfig::default().with_style(ProgressStyle::Hidden),
+        );
         pb.set(0);
         assert_eq!(pb.percentage(), 100.0);
     }
 
     #[test]
     fn test_progress_bar_no_total() {
-        let pb = ProgressBar::with_config(None,
-            ProgressConfig::default().with_style(ProgressStyle::Hidden));
+        let pb = ProgressBar::with_config(
+            None,
+            ProgressConfig::default().with_style(ProgressStyle::Hidden),
+        );
         assert_eq!(pb.percentage(), 0.0);
     }
 
@@ -414,7 +445,7 @@ mod tests {
             .with_style(ProgressStyle::Detailed)
             .with_prefix("Test")
             .with_width(50);
-        
+
         assert_eq!(config.style, ProgressStyle::Detailed);
         assert_eq!(config.prefix, "Test");
         assert_eq!(config.width, 50);
@@ -431,8 +462,10 @@ mod tests {
 
     #[test]
     fn test_render_bar() {
-        let mut pb = ProgressBar::with_config(Some(100),
-            ProgressConfig::default().with_style(ProgressStyle::Hidden));
+        let mut pb = ProgressBar::with_config(
+            Some(100),
+            ProgressConfig::default().with_style(ProgressStyle::Hidden),
+        );
         pb.set(50);
         let output = pb.render_bar();
         assert!(output.contains("50.0%"));
@@ -440,8 +473,10 @@ mod tests {
 
     #[test]
     fn test_render_percentage() {
-        let mut pb = ProgressBar::with_config(Some(100),
-            ProgressConfig::default().with_style(ProgressStyle::Hidden));
+        let mut pb = ProgressBar::with_config(
+            Some(100),
+            ProgressConfig::default().with_style(ProgressStyle::Hidden),
+        );
         pb.set(75);
         let output = pb.render_percentage();
         assert!(output.contains("75.0%"));

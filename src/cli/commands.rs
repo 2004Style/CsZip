@@ -27,10 +27,7 @@ pub fn compress(
     if !algorithm.is_implemented() {
         return Err(Error::new(
             ErrorKind::UnsupportedAlgorithm,
-            format!(
-                "El algoritmo {} no está implementado aún",
-                algorithm.name()
-            ),
+            format!("El algoritmo {} no está implementado aún", algorithm.name()),
         ));
     }
 
@@ -46,12 +43,50 @@ pub fn compress(
     let output_path = match output {
         Some(p) => p.to_path_buf(),
         None => {
-            // Añadir .cz a la ruta completa (preservando extensión original)
             let mut p = input.to_path_buf().into_os_string();
-            p.push(".cz");
+            if input.is_dir() {
+                p.push(".zip");
+            } else {
+                p.push(".cz");
+            }
             PathBuf::from(p)
         }
     };
+
+    // Verificar redirección para formatos externos
+    let out_ext = output_path
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("");
+    if out_ext == "zip" {
+        if output_path.exists() && !force {
+            return Err(Error::new(
+                ErrorKind::FileExists,
+                format!(
+                    "El archivo ya existe: {}. Use -f para sobreescribir.",
+                    output_path.display()
+                ),
+            ));
+        }
+        if verbosity.show_info() {
+            println!(
+                "Comprimiendo en formato ZIP: {} -> {}",
+                input.display(),
+                output_path.display()
+            );
+        }
+        let start = Instant::now();
+        crate::utils::archive::compress_zip(input, &output_path)?;
+        if verbosity.show_info() {
+            println!("✓ ZIP creado exitosamente en {:.2?}", start.elapsed());
+        }
+        return Ok(());
+    } else if out_ext == "rar" {
+        return Err(Error::new(
+            ErrorKind::UnsupportedAlgorithm,
+            "No se soporta la creación/compresión de archivos .rar debido a restricciones de licencia propietarias. Solo se soporta la extracción de archivos .rar existentes."
+        ));
+    }
 
     // Verificar si el archivo de salida existe
     if output_path.exists() && !force {
@@ -65,7 +100,11 @@ pub fn compress(
     }
 
     if verbosity.show_info() {
-        println!("Comprimiendo: {} -> {}", input.display(), output_path.display());
+        println!(
+            "Comprimiendo: {} -> {}",
+            input.display(),
+            output_path.display()
+        );
         println!("Algoritmo: {}, Nivel: {}", algorithm.name(), level);
     }
 
@@ -131,11 +170,43 @@ pub fn decompress(
         ));
     }
 
-    // Verificar extensión
-    if input.extension().and_then(|e| e.to_str()) != Some("cz") {
+    // Verificar redirección para formatos externos
+    let in_ext = input.extension().and_then(|e| e.to_str()).unwrap_or("");
+    if in_ext == "zip" || in_ext == "rar" {
+        let dest_dir = match output {
+            Some(p) => p.to_path_buf(),
+            None => {
+                let mut p = input.to_path_buf();
+                p.set_extension(""); // remueve .zip o .rar
+                p
+            }
+        };
+
         if verbosity.show_info() {
-            eprintln!("Advertencia: El archivo no tiene extensión .cz");
+            println!(
+                "Extrayendo archivo {}: {} -> {}",
+                in_ext.to_uppercase(),
+                input.display(),
+                dest_dir.display()
+            );
         }
+
+        let start = Instant::now();
+        if in_ext == "zip" {
+            crate::utils::archive::decompress_zip(input, &dest_dir)?;
+        } else {
+            crate::utils::archive::decompress_rar(input, &dest_dir)?;
+        }
+
+        if verbosity.show_info() {
+            println!("✓ Extracción completada en {:.2?}", start.elapsed());
+        }
+        return Ok(());
+    }
+
+    // Verificar extensión
+    if input.extension().and_then(|e| e.to_str()) != Some("cz") && verbosity.show_info() {
+        eprintln!("Advertencia: El archivo no tiene extensión .cz");
     }
 
     // Determinar archivo de salida
@@ -183,7 +254,10 @@ pub fn decompress(
     if verbosity.show_details() {
         let alg = reader.algorithm()?;
         println!("Algoritmo: {}", alg.name());
-        println!("Verificación: {}", if no_verify { "desactivada" } else { "activada" });
+        println!(
+            "Verificación: {}",
+            if no_verify { "desactivada" } else { "activada" }
+        );
     }
 
     // Crear archivo de salida
@@ -199,9 +273,9 @@ pub fn decompress(
     // Descomprimir
     let stats = reader.decompress_all(&mut writer)?;
 
-    writer.flush().map_err(|e| {
-        Error::new(ErrorKind::IoError, format!("Error en flush: {}", e))
-    })?;
+    writer
+        .flush()
+        .map_err(|e| Error::new(ErrorKind::IoError, format!("Error en flush: {}", e)))?;
 
     let elapsed = start.elapsed();
 
@@ -231,12 +305,26 @@ pub fn info(input: &Path, detailed: bool, _verbosity: Verbosity) -> Result<(), E
 
     println!("Información de archivo: {}", input.display());
     println!("{}", "-".repeat(50));
-    println!("Version:     {}.{}", header.version_major, header.version_minor);
+    println!(
+        "Version:     {}.{}",
+        header.version_major, header.version_minor
+    );
 
     let algorithm = Algorithm::from_id(header.compression_algo)?;
-    println!("Algoritmo:   {} ({})", algorithm.name(), header.compression_algo);
+    println!(
+        "Algoritmo:   {} ({})",
+        algorithm.name(),
+        header.compression_algo
+    );
     println!("Tamaño bloque: {} bytes", header.block_size());
-    println!("CRC:         {}", if header.uses_crc64() { "CRC-64" } else { "CRC-32" });
+    println!(
+        "CRC:         {}",
+        if header.uses_crc64() {
+            "CRC-64"
+        } else {
+            "CRC-32"
+        }
+    );
 
     // Leer footer para más información
     if let Ok(footer) = reader.read_footer() {
@@ -253,10 +341,7 @@ pub fn info(input: &Path, detailed: bool, _verbosity: Verbosity) -> Result<(), E
         while let Some(block) = reader.read_block()? {
             println!(
                 "  [{}] Original: {} bytes, Comprimido: {} bytes, CRC: 0x{:08X}",
-                block_num,
-                block.original_size,
-                block.compressed_size,
-                block.crc32
+                block_num, block.original_size, block.compressed_size, block.crc32
             );
             block_num += 1;
         }
@@ -365,7 +450,10 @@ pub fn list(input: &Path, verbosity: Verbosity) -> Result<(), Error> {
 
         if verbosity.show_details() {
             println!("\nDetalle de bloques:");
-            println!("{:>5} {:>12} {:>12} {:>8}", "Bloque", "Original", "Comprimido", "Ratio");
+            println!(
+                "{:>5} {:>12} {:>12} {:>8}",
+                "Bloque", "Original", "Comprimido", "Ratio"
+            );
             println!("{}", "-".repeat(45));
 
             reader.rewind()?;

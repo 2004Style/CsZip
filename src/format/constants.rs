@@ -13,7 +13,7 @@ pub const MAGIC_PRIMARY: u16 = 0x435A;
 pub const MAGIC_ALT: u16 = 0x5A43;
 
 // ============================================================================
-// VERSIÓN DEL FORMATO  
+// VERSIÓN DEL FORMATO
 // ============================================================================
 
 /// Versión mayor actual del formato

@@ -4,6 +4,8 @@
 
 use std::path::Path;
 
+pub mod archive;
+
 /// Formatea un tamaño en bytes de forma legible
 ///
 /// # Ejemplos
@@ -17,19 +19,19 @@ use std::path::Path;
 /// ```
 pub fn format_size(bytes: u64) -> String {
     const UNITS: &[&str] = &["B", "KiB", "MiB", "GiB", "TiB"];
-    
+
     if bytes == 0 {
         return "0 B".to_string();
     }
-    
+
     let mut size = bytes as f64;
     let mut unit_idx = 0;
-    
+
     while size >= 1024.0 && unit_idx < UNITS.len() - 1 {
         size /= 1024.0;
         unit_idx += 1;
     }
-    
+
     if unit_idx == 0 {
         format!("{} B", bytes)
     } else {
@@ -107,7 +109,9 @@ pub fn get_extension(path: &Path) -> Option<&str> {
 
 /// Verifica si un path tiene extensión .cz
 pub fn is_cz_file(path: &Path) -> bool {
-    get_extension(path).map(|e| e.eq_ignore_ascii_case("cz")).unwrap_or(false)
+    get_extension(path)
+        .map(|e| e.eq_ignore_ascii_case("cz"))
+        .unwrap_or(false)
 }
 
 /// Genera el nombre del archivo de salida para compresión
@@ -120,11 +124,7 @@ pub fn output_path_for_compress(input: &Path) -> std::path::PathBuf {
 /// Genera el nombre del archivo de salida para descompresión
 pub fn output_path_for_decompress(input: &Path) -> Option<std::path::PathBuf> {
     let input_str = input.to_string_lossy();
-    if input_str.ends_with(".cz") {
-        Some(std::path::PathBuf::from(&input_str[..input_str.len() - 3]))
-    } else {
-        None
-    }
+    input_str.strip_suffix(".cz").map(std::path::PathBuf::from)
 }
 
 /// Verifica si un número es potencia de 2
@@ -145,7 +145,7 @@ pub fn align_up(value: usize, alignment: usize) -> usize {
     if alignment == 0 {
         return value;
     }
-    (value + alignment - 1) / alignment * alignment
+    value.div_ceil(alignment) * alignment
 }
 
 #[cfg(test)]

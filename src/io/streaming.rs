@@ -5,11 +5,11 @@
 
 use std::io::{Read, Seek, SeekFrom, Write};
 
-use crate::codec::{Algorithm, Compressor, Decompressor, CompressionLevel};
+use crate::codec::{Algorithm, CompressionLevel, Compressor, Decompressor};
 use crate::error::{Error, ErrorKind, Result};
-use crate::format::{BlockHeader, FileFooter, Header};
 use crate::format::checksum::Crc32;
 use crate::format::constants;
+use crate::format::{BlockHeader, FileFooter, Header};
 
 /// Callback de progreso
 pub type ProgressCallback = Box<dyn Fn(StreamProgress) + Send>;
@@ -114,7 +114,7 @@ impl<W: Write + Seek> StreamingCompressor<W> {
     /// Crear nuevo compresor de streaming
     pub fn new(mut writer: W, options: StreamOptions) -> Result<Self> {
         let block_size_log2 = (options.block_size as f64).log2() as u16;
-        
+
         let header = Header::new(
             options.algorithm.id(),
             block_size_log2,
@@ -123,8 +123,8 @@ impl<W: Write + Seek> StreamingCompressor<W> {
 
         header.write(&mut writer)?;
 
-        let compressor = Compressor::new(options.algorithm, options.level)
-            .with_crc64(options.use_crc64);
+        let compressor =
+            Compressor::new(options.algorithm, options.level).with_crc64(options.use_crc64);
 
         Ok(Self {
             writer,
@@ -151,13 +151,13 @@ impl<W: Write + Seek> StreamingCompressor<W> {
 
         loop {
             let bytes_read = read_full_block(reader, &mut buffer)?;
-            
+
             if bytes_read == 0 {
                 break;
             }
 
             self.write_block(&buffer[..bytes_read])?;
-            
+
             if let Some(ref callback) = self.progress_callback {
                 callback(StreamProgress {
                     bytes_processed: self.total_original,
@@ -193,7 +193,9 @@ impl<W: Write + Seek> StreamingCompressor<W> {
         // Comprimir bloque a un buffer
         let mut compressed_data = Vec::new();
         let mut cursor_in = std::io::Cursor::new(data);
-        let result = self.compressor.compress(&mut cursor_in, &mut compressed_data)?;
+        let result = self
+            .compressor
+            .compress(&mut cursor_in, &mut compressed_data)?;
 
         // Crear y escribir header de bloque
         let block_header = BlockHeader::new(
@@ -222,10 +224,7 @@ impl<W: Write + Seek> StreamingCompressor<W> {
     /// Finalizar compresión y escribir footer
     pub fn finish(mut self) -> Result<StreamStats> {
         // Escribir footer
-        let footer = FileFooter::new(
-            self.block_count,
-            self.total_original as u32,
-        )?;
+        let footer = FileFooter::new(self.block_count, self.total_original as u32)?;
         footer.write(&mut self.writer)?;
 
         self.writer.flush()?;
@@ -254,10 +253,10 @@ impl<R: Read + Seek> StreamingDecompressor<R> {
     /// Crear nuevo descompresor de streaming
     pub fn new(mut reader: R, options: StreamOptions) -> Result<Self> {
         let header = Header::read(&mut reader)?;
-        
+
         let algorithm = Algorithm::from_id(header.compression_algo)?;
-        let decompressor = Decompressor::new(algorithm)
-            .with_checksum_verification(options.verify_checksums);
+        let decompressor =
+            Decompressor::new(algorithm).with_checksum_verification(options.verify_checksums);
 
         Ok(Self {
             reader,
@@ -282,25 +281,20 @@ impl<R: Read + Seek> StreamingDecompressor<R> {
         let mut total_compressed = 0u64;
         let mut global_crc = Crc32::new();
 
-        loop {
-            match self.read_block()? {
-                Some((data, block_info)) => {
-                    writer.write_all(&data)?;
-                    
-                    global_crc.update(&data);
-                    total_original += data.len() as u64;
-                    total_compressed += block_info.compressed_size as u64;
-                    
-                    if let Some(ref callback) = self.progress_callback {
-                        callback(StreamProgress {
-                            bytes_processed: total_original,
-                            bytes_total: self.footer.as_ref().map(|f| f.total_raw_size as u64),
-                            blocks_processed: self.current_block,
-                            blocks_total: self.footer.as_ref().map(|f| f.num_blocks),
-                        });
-                    }
-                }
-                None => break,
+        while let Some((data, block_info)) = self.read_block()? {
+            writer.write_all(&data)?;
+
+            global_crc.update(&data);
+            total_original += data.len() as u64;
+            total_compressed += block_info.compressed_size as u64;
+
+            if let Some(ref callback) = self.progress_callback {
+                callback(StreamProgress {
+                    bytes_processed: total_original,
+                    bytes_total: self.footer.as_ref().map(|f| f.total_raw_size as u64),
+                    blocks_processed: self.current_block,
+                    blocks_total: self.footer.as_ref().map(|f| f.num_blocks),
+                });
             }
         }
 
@@ -323,7 +317,7 @@ impl<R: Read + Seek> StreamingDecompressor<R> {
             Err(e) if e.kind() == std::io::ErrorKind::UnexpectedEof => return Ok(None),
             Err(e) => return Err(Error::from(e)),
         }
-        
+
         // Si es el marcador de footer (0xFE), leer el footer
         if first_byte[0] == 0xFE {
             // Retroceder para leer el footer completo
@@ -331,16 +325,16 @@ impl<R: Read + Seek> StreamingDecompressor<R> {
             self.footer = Some(FileFooter::read(&mut self.reader)?);
             return Ok(None);
         }
-        
+
         // No es footer, leer el resto del BlockHeader
         let mut rest = [0u8; 11]; // BlockHeader::SIZE - 1 = 12 - 1 = 11
         self.reader.read_exact(&mut rest)?;
-        
+
         // Combinar los bytes
         let mut header_bytes = [0u8; 12];
         header_bytes[0] = first_byte[0];
         header_bytes[1..].copy_from_slice(&rest);
-        
+
         let block_header = BlockHeader::from_bytes(&header_bytes)?;
 
         // Verificar tipo de bloque
@@ -389,7 +383,8 @@ impl<R: Read + Seek> StreamingDecompressor<R> {
     pub fn read_footer(&mut self) -> Result<&FileFooter> {
         if self.footer.is_none() {
             // Ir al final - tamaño del footer
-            self.reader.seek(SeekFrom::End(-(FileFooter::SIZE as i64)))?;
+            self.reader
+                .seek(SeekFrom::End(-(FileFooter::SIZE as i64)))?;
             self.footer = Some(FileFooter::read(&mut self.reader)?);
             // Volver al inicio de datos
             self.reader.seek(SeekFrom::Start(Header::SIZE as u64))?;
@@ -434,7 +429,7 @@ impl StreamStats {
 /// Leer un bloque completo del reader
 fn read_full_block<R: Read>(reader: &mut R, buffer: &mut [u8]) -> Result<usize> {
     let mut total_read = 0;
-    
+
     while total_read < buffer.len() {
         match reader.read(&mut buffer[total_read..]) {
             Ok(0) => break, // EOF
@@ -443,7 +438,7 @@ fn read_full_block<R: Read>(reader: &mut R, buffer: &mut [u8]) -> Result<usize> 
             Err(e) => return Err(e.into()),
         }
     }
-    
+
     Ok(total_read)
 }
 
@@ -465,7 +460,7 @@ mod tests {
             .with_block_size(8192)
             .with_algorithm(Algorithm::Store)
             .with_memory_limit(1024 * 1024);
-        
+
         assert_eq!(opts.block_size, 8192);
         assert_eq!(opts.memory_limit, Some(1024 * 1024));
     }
@@ -478,7 +473,7 @@ mod tests {
             blocks_processed: 1,
             blocks_total: Some(2),
         };
-        
+
         assert_eq!(progress.percentage(), Some(50.0));
     }
 
@@ -490,7 +485,7 @@ mod tests {
             block_count: 1,
             crc32: 0,
         };
-        
+
         assert_eq!(stats.ratio(), 50.0);
         assert_eq!(stats.savings(), 50.0);
     }
@@ -526,7 +521,7 @@ mod tests {
         let data = b"test data here";
         let mut cursor = Cursor::new(data.as_slice());
         let mut buffer = vec![0u8; 5];
-        
+
         let n = read_full_block(&mut cursor, &mut buffer).unwrap();
         assert_eq!(n, 5);
         assert_eq!(&buffer, b"test ");

@@ -43,11 +43,10 @@ En la pestaña **Releases** del repositorio aparecerá:
 
 ```
 CsZip v0.2.0
-├── cszip-linux-x86_64.tar.gz
-├── cszip-linux-x86_64-musl.tar.gz
-├── cszip-macos-x86_64.tar.gz
-├── cszip-macos-aarch64.tar.gz
-├── cszip-windows-x86_64.zip
+├── cszip-linux-amd64.tar.gz
+├── cszip-macos-amd64.tar.gz
+├── cszip-macos-arm64.tar.gz
+├── cszip-windows-amd64.zip
 └── checksums.sha256
 ```
 

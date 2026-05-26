@@ -6,11 +6,11 @@ use std::fs::File;
 use std::io::{BufWriter, Read, Seek, Write};
 use std::path::Path;
 
-use crate::codec::{Algorithm, Compressor, CompressionLevel};
+use crate::codec::{Algorithm, CompressionLevel, Compressor};
 use crate::error::{Error, ErrorKind};
-use crate::format::{BlockHeader, FileFooter, Header};
 use crate::format::checksum::Crc32;
 use crate::format::constants;
+use crate::format::{BlockHeader, FileFooter, Header};
 
 /// Escritor de archivos CsZip
 pub struct CzWriter<W: Write + Seek> {
@@ -35,12 +35,8 @@ impl CzWriter<BufWriter<File>> {
         algorithm: Algorithm,
         level: CompressionLevel,
     ) -> Result<Self, Error> {
-        let file = File::create(path.as_ref()).map_err(|e| {
-            Error::new(
-                ErrorKind::IoError,
-                format!("Error creando archivo: {}", e),
-            )
-        })?;
+        let file = File::create(path.as_ref())
+            .map_err(|e| Error::new(ErrorKind::IoError, format!("Error creando archivo: {}", e)))?;
 
         let writer = BufWriter::new(file);
         Self::new_with_options(writer, algorithm, level)
@@ -134,10 +130,21 @@ impl<W: Write + Seek> CzWriter<W> {
         self.global_crc32.update(data);
 
         // Comprimir el bloque
-        let compress_result = self.compressor.compress_block(data)?;
+        let mut compressed_buf = Vec::new();
+        let compress_result = if self.algorithm() == Algorithm::Store {
+            self.compressor.compress_block(data)?
+        } else {
+            let mut cursor_in = std::io::Cursor::new(data);
+            self.compressor
+                .compress(&mut cursor_in, &mut compressed_buf)?
+        };
 
         // Para STORE, los datos comprimidos son los mismos que los originales
-        let compressed_data = data;
+        let compressed_data = if self.algorithm() == Algorithm::Store {
+            data
+        } else {
+            &compressed_buf
+        };
 
         // Crear block header
         let block_header = BlockHeader::new(
@@ -177,11 +184,8 @@ impl<W: Write + Seek> CzWriter<W> {
         let global_crc = self.global_crc32.finalize();
 
         // Crear y escribir footer con checksum
-        let footer = FileFooter::with_checksum(
-            self.block_count,
-            self.total_original as u32,
-            global_crc,
-        )?;
+        let footer =
+            FileFooter::with_checksum(self.block_count, self.total_original as u32, global_crc)?;
 
         let footer_bytes = footer.to_bytes();
         self.writer.write_all(&footer_bytes).map_err(|e| {
@@ -192,9 +196,9 @@ impl<W: Write + Seek> CzWriter<W> {
         })?;
 
         // Flush final
-        self.writer.flush().map_err(|e| {
-            Error::new(ErrorKind::IoError, format!("Error en flush: {}", e))
-        })?;
+        self.writer
+            .flush()
+            .map_err(|e| Error::new(ErrorKind::IoError, format!("Error en flush: {}", e)))?;
 
         Ok(WriteStats {
             block_count: self.block_count,

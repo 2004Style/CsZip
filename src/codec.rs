@@ -22,7 +22,7 @@ pub use compressor::Compressor;
 pub use decompressor::Decompressor;
 pub use filters::{Filter, FilterType};
 pub use huffman::{HuffmanDecoder, HuffmanEncoder};
-pub use lz77::{Lz77Compressor, Lz77Decompressor, Lz77Config, Lz77Token};
+pub use lz77::{Lz77Compressor, Lz77Config, Lz77Decompressor, Lz77Token};
 
 use crate::error::{Error, ErrorKind};
 use crate::format::constants;
@@ -77,7 +77,7 @@ impl Algorithm {
 
     /// Indica si el algoritmo está implementado
     pub fn is_implemented(&self) -> bool {
-        matches!(self, Algorithm::Store)
+        matches!(self, Algorithm::Store | Algorithm::Lz77Huffman)
     }
 }
 
@@ -173,7 +173,7 @@ mod tests {
     #[test]
     fn test_algorithm_implemented() {
         assert!(Algorithm::Store.is_implemented());
-        assert!(!Algorithm::Lz77Huffman.is_implemented());
+        assert!(Algorithm::Lz77Huffman.is_implemented());
         assert!(!Algorithm::Lz4.is_implemented());
         assert!(!Algorithm::Lzma.is_implemented());
         assert!(!Algorithm::Deflate.is_implemented());

@@ -108,12 +108,8 @@ pub fn compress_file(
         }
     };
 
-    let input_file = File::open(input).map_err(|e| {
-        Error::new(
-            ErrorKind::IoError,
-            format!("Error abriendo archivo: {}", e),
-        )
-    })?;
+    let input_file = File::open(input)
+        .map_err(|e| Error::new(ErrorKind::IoError, format!("Error abriendo archivo: {}", e)))?;
 
     let mut reader = BufReader::new(input_file);
     let mut writer = CzWriter::create(&output_path)?;
@@ -158,12 +154,8 @@ pub fn decompress_file(
 
     let mut reader = CzReader::open(input)?;
 
-    let output_file = File::create(&output_path).map_err(|e| {
-        Error::new(
-            ErrorKind::IoError,
-            format!("Error creando archivo: {}", e),
-        )
-    })?;
+    let output_file = File::create(&output_path)
+        .map_err(|e| Error::new(ErrorKind::IoError, format!("Error creando archivo: {}", e)))?;
 
     let mut writer = BufWriter::new(output_file);
     reader.decompress_all(&mut writer)

@@ -4,8 +4,8 @@
 //! códigos de longitud variable basados en la frecuencia de los símbolos.
 //! Símbolos más frecuentes obtienen códigos más cortos.
 
-use std::collections::{BinaryHeap, HashMap};
 use std::cmp::Ordering;
+use std::collections::{BinaryHeap, HashMap};
 
 use crate::error::{Error, ErrorKind, Result};
 
@@ -247,10 +247,8 @@ impl HuffmanEncoder {
         let mut output = Vec::new();
 
         // Contar símbolos con frecuencia > 0
-        let count: u16 = self.frequencies.iter()
-            .filter(|&&f| f > 0)
-            .count() as u16;
-        
+        let count: u16 = self.frequencies.iter().filter(|&&f| f > 0).count() as u16;
+
         output.extend_from_slice(&count.to_be_bytes());
 
         // Escribir cada símbolo y su frecuencia
@@ -274,8 +272,9 @@ impl HuffmanEncoder {
         self.calculate_frequencies(data);
 
         // Construir árbol
-        let tree = build_tree(&self.frequencies)
-            .ok_or_else(|| Error::new(ErrorKind::InvalidData, "No se pudo construir árbol Huffman"))?;
+        let tree = build_tree(&self.frequencies).ok_or_else(|| {
+            Error::new(ErrorKind::InvalidData, "No se pudo construir árbol Huffman")
+        })?;
 
         // Generar códigos
         let mut code_table = CodeTable::new();
@@ -290,7 +289,8 @@ impl HuffmanEncoder {
         // Codificar datos
         let mut writer = BitWriter::new();
         for &byte in data {
-            let code = code_table.get(&(byte as u16))
+            let code = code_table
+                .get(&(byte as u16))
                 .ok_or_else(|| Error::new(ErrorKind::InvalidData, "Símbolo sin código"))?;
             writer.write_bits(code.bits, code.length);
         }
@@ -323,7 +323,10 @@ impl HuffmanDecoder {
     /// Deserializar frecuencias
     fn deserialize_frequencies(data: &[u8]) -> Result<([u64; MAX_SYMBOLS], usize)> {
         if data.len() < 2 {
-            return Err(Error::new(ErrorKind::UnexpectedEof, "Datos Huffman truncados"));
+            return Err(Error::new(
+                ErrorKind::UnexpectedEof,
+                "Datos Huffman truncados",
+            ));
         }
 
         let count = u16::from_be_bytes([data[0], data[1]]) as usize;
@@ -332,14 +335,23 @@ impl HuffmanDecoder {
 
         for _ in 0..count {
             if pos + 10 > data.len() {
-                return Err(Error::new(ErrorKind::UnexpectedEof, "Tabla de frecuencias truncada"));
+                return Err(Error::new(
+                    ErrorKind::UnexpectedEof,
+                    "Tabla de frecuencias truncada",
+                ));
             }
             let symbol = u16::from_be_bytes([data[pos], data[pos + 1]]) as usize;
             let freq = u64::from_be_bytes([
-                data[pos + 2], data[pos + 3], data[pos + 4], data[pos + 5],
-                data[pos + 6], data[pos + 7], data[pos + 8], data[pos + 9],
+                data[pos + 2],
+                data[pos + 3],
+                data[pos + 4],
+                data[pos + 5],
+                data[pos + 6],
+                data[pos + 7],
+                data[pos + 8],
+                data[pos + 9],
             ]);
-            
+
             if symbol < MAX_SYMBOLS {
                 frequencies[symbol] = freq;
             }
@@ -359,13 +371,15 @@ impl HuffmanDecoder {
         let (frequencies, pos) = Self::deserialize_frequencies(data)?;
 
         if pos + 4 > data.len() {
-            return Err(Error::new(ErrorKind::UnexpectedEof, "Tamaño original faltante"));
+            return Err(Error::new(
+                ErrorKind::UnexpectedEof,
+                "Tamaño original faltante",
+            ));
         }
 
         // Leer tamaño original
-        let original_size = u32::from_be_bytes([
-            data[pos], data[pos + 1], data[pos + 2], data[pos + 3],
-        ]) as usize;
+        let original_size =
+            u32::from_be_bytes([data[pos], data[pos + 1], data[pos + 2], data[pos + 3]]) as usize;
 
         let encoded_data = &data[pos + 4..];
 
@@ -388,23 +402,30 @@ impl HuffmanDecoder {
                     output.push(symbol as u8);
                 }
                 current = &tree;
-                
+
                 if output.len() >= original_size {
                     break;
                 }
             } else {
                 match reader.read_bit() {
                     Some(0) => {
-                        current = current.left.as_ref()
+                        current = current
+                            .left
+                            .as_ref()
                             .ok_or_else(|| Error::new(ErrorKind::InvalidData, "Árbol corrupto"))?;
                     }
                     Some(1) => {
-                        current = current.right.as_ref()
+                        current = current
+                            .right
+                            .as_ref()
                             .ok_or_else(|| Error::new(ErrorKind::InvalidData, "Árbol corrupto"))?;
                     }
                     Some(_) => {
                         // Bit inválido (solo debería ser 0 o 1)
-                        return Err(Error::new(ErrorKind::InvalidData, "Bit inválido en datos Huffman"));
+                        return Err(Error::new(
+                            ErrorKind::InvalidData,
+                            "Bit inválido en datos Huffman",
+                        ));
                     }
                     None => {
                         break;
@@ -438,10 +459,10 @@ mod tests {
     fn test_roundtrip_simple() {
         let mut encoder = HuffmanEncoder::new();
         let input = b"hello";
-        
+
         let encoded = encoder.encode(input).unwrap();
         let decoded = HuffmanDecoder::decode(&encoded).unwrap();
-        
+
         assert_eq!(decoded, input);
     }
 
@@ -449,10 +470,10 @@ mod tests {
     fn test_roundtrip_single_char() {
         let mut encoder = HuffmanEncoder::new();
         let input = b"aaaaaaa";
-        
+
         let encoded = encoder.encode(input).unwrap();
         let decoded = HuffmanDecoder::decode(&encoded).unwrap();
-        
+
         assert_eq!(decoded, input);
     }
 
@@ -460,10 +481,10 @@ mod tests {
     fn test_roundtrip_all_bytes() {
         let mut encoder = HuffmanEncoder::new();
         let input: Vec<u8> = (0..=255).collect();
-        
+
         let encoded = encoder.encode(&input).unwrap();
         let decoded = HuffmanDecoder::decode(&encoded).unwrap();
-        
+
         assert_eq!(decoded, input);
     }
 
@@ -471,10 +492,10 @@ mod tests {
     fn test_roundtrip_repeated() {
         let mut encoder = HuffmanEncoder::new();
         let input = b"abcabcabcabc";
-        
+
         let encoded = encoder.encode(input).unwrap();
         let decoded = HuffmanDecoder::decode(&encoded).unwrap();
-        
+
         assert_eq!(decoded, input);
     }
 
@@ -482,14 +503,15 @@ mod tests {
     fn test_compression_skewed() {
         let mut encoder = HuffmanEncoder::new();
         // Datos con frecuencia muy desigual - deberían comprimir bien
-        let input: Vec<u8> = std::iter::repeat(b'a').take(100)
+        let input: Vec<u8> = std::iter::repeat(b'a')
+            .take(100)
             .chain(std::iter::repeat(b'b').take(10))
             .chain(std::iter::repeat(b'c').take(1))
             .collect();
-        
+
         let encoded = encoder.encode(&input).unwrap();
         let decoded = HuffmanDecoder::decode(&encoded).unwrap();
-        
+
         assert_eq!(decoded, input);
         // La tabla de frecuencias añade overhead, así que para datos pequeños
         // puede no haber compresión efectiva
@@ -501,7 +523,7 @@ mod tests {
         writer.write_bits(0b101, 3);
         writer.write_bits(0b1110, 4);
         writer.write_bits(0b1, 1);
-        
+
         let bytes = writer.finish();
         assert_eq!(bytes, vec![0b10111101]);
     }
@@ -510,7 +532,7 @@ mod tests {
     fn test_bit_reader() {
         let data = vec![0b10110100];
         let mut reader = BitReader::new(&data);
-        
+
         assert_eq!(reader.read_bit(), Some(1));
         assert_eq!(reader.read_bit(), Some(0));
         assert_eq!(reader.read_bit(), Some(1));
@@ -526,10 +548,10 @@ mod tests {
     fn test_large_data() {
         let mut encoder = HuffmanEncoder::new();
         let input: Vec<u8> = (0..10000).map(|i| (i % 256) as u8).collect();
-        
+
         let encoded = encoder.encode(&input).unwrap();
         let decoded = HuffmanDecoder::decode(&encoded).unwrap();
-        
+
         assert_eq!(decoded, input);
     }
 }

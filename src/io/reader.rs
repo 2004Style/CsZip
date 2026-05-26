@@ -8,9 +8,9 @@ use std::path::Path;
 
 use crate::codec::{Algorithm, Decompressor};
 use crate::error::{Error, ErrorKind};
-use crate::format::{BlockHeader, FileFooter, Header};
 use crate::format::checksum::Crc32;
 use crate::format::constants;
+use crate::format::{BlockHeader, FileFooter, Header};
 
 /// Lector de archivos CsZip
 pub struct CzReader<R: Read + Seek> {
@@ -26,10 +26,7 @@ impl CzReader<BufReader<File>> {
     /// Abre un archivo CsZip existente
     pub fn open<P: AsRef<Path>>(path: P) -> Result<Self, Error> {
         let file = File::open(path.as_ref()).map_err(|e| {
-            Error::new(
-                ErrorKind::IoError,
-                format!("Error abriendo archivo: {}", e),
-            )
+            Error::new(ErrorKind::IoError, format!("Error abriendo archivo: {}", e))
         })?;
 
         let reader = BufReader::new(file);
@@ -86,28 +83,20 @@ impl<R: Read + Seek> CzReader<R> {
 
     /// Lee el footer del archivo (salta al final)
     pub fn read_footer(&mut self) -> Result<&FileFooter, Error> {
-        if self.footer.is_some() {
-            return Ok(self.footer.as_ref().unwrap());
+        if let Some(ref footer) = self.footer {
+            return Ok(footer);
         }
 
         // Ir al final del archivo menos el tamaño del footer
         self.reader
             .seek(SeekFrom::End(-(constants::FOOTER_SIZE as i64)))
-            .map_err(|e| {
-                Error::new(
-                    ErrorKind::IoError,
-                    format!("Error buscando footer: {}", e),
-                )
-            })?;
+            .map_err(|e| Error::new(ErrorKind::IoError, format!("Error buscando footer: {}", e)))?;
 
         // Leer footer
         let mut footer_bytes = [0u8; constants::FOOTER_SIZE];
-        self.reader.read_exact(&mut footer_bytes).map_err(|e| {
-            Error::new(
-                ErrorKind::IoError,
-                format!("Error leyendo footer: {}", e),
-            )
-        })?;
+        self.reader
+            .read_exact(&mut footer_bytes)
+            .map_err(|e| Error::new(ErrorKind::IoError, format!("Error leyendo footer: {}", e)))?;
 
         let footer = FileFooter::from_bytes(&footer_bytes)?;
 
@@ -118,9 +107,7 @@ impl<R: Read + Seek> CzReader<R> {
         // Volver al inicio de los datos
         self.reader
             .seek(SeekFrom::Start(constants::HEADER_SIZE as u64))
-            .map_err(|e| {
-                Error::new(ErrorKind::IoError, format!("Error en seek: {}", e))
-            })?;
+            .map_err(|e| Error::new(ErrorKind::IoError, format!("Error en seek: {}", e)))?;
 
         Ok(self.footer.as_ref().unwrap())
     }
@@ -208,32 +195,25 @@ impl<R: Read + Seek> CzReader<R> {
         // Asegurar que estamos al inicio de los datos
         self.reader
             .seek(SeekFrom::Start(constants::HEADER_SIZE as u64))
-            .map_err(|e| {
-                Error::new(ErrorKind::IoError, format!("Error en seek: {}", e))
-            })?;
+            .map_err(|e| Error::new(ErrorKind::IoError, format!("Error en seek: {}", e)))?;
 
         self.current_block = 0;
 
-        loop {
-            match self.read_block()? {
-                Some(block) => {
-                    // Actualizar CRC global
-                    global_crc.update(&block.data);
+        while let Some(block) = self.read_block()? {
+            // Actualizar CRC global
+            global_crc.update(&block.data);
 
-                    // Escribir datos descomprimidos
-                    writer.write_all(&block.data).map_err(|e| {
-                        Error::new(
-                            ErrorKind::IoError,
-                            format!("Error escribiendo datos: {}", e),
-                        )
-                    })?;
+            // Escribir datos descomprimidos
+            writer.write_all(&block.data).map_err(|e| {
+                Error::new(
+                    ErrorKind::IoError,
+                    format!("Error escribiendo datos: {}", e),
+                )
+            })?;
 
-                    total_blocks += 1;
-                    total_original += block.original_size as u64;
-                    total_compressed += block.compressed_size as u64;
-                }
-                None => break,
-            }
+            total_blocks += 1;
+            total_original += block.original_size as u64;
+            total_compressed += block.compressed_size as u64;
         }
 
         let global_crc32 = global_crc.finalize();
@@ -246,8 +226,7 @@ impl<R: Read + Seek> CzReader<R> {
                         ErrorKind::ChecksumMismatch,
                         format!(
                             "CRC-32 global no coincide: esperado 0x{:08X}, calculado 0x{:08X}",
-                            footer.checksum,
-                            global_crc32
+                            footer.checksum, global_crc32
                         ),
                     ));
                 }
@@ -266,9 +245,7 @@ impl<R: Read + Seek> CzReader<R> {
     pub fn rewind(&mut self) -> Result<(), Error> {
         self.reader
             .seek(SeekFrom::Start(constants::HEADER_SIZE as u64))
-            .map_err(|e| {
-                Error::new(ErrorKind::IoError, format!("Error en seek: {}", e))
-            })?;
+            .map_err(|e| Error::new(ErrorKind::IoError, format!("Error en seek: {}", e)))?;
 
         self.current_block = 0;
         Ok(())

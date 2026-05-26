@@ -120,7 +120,9 @@ impl Crc64 {
 
     /// Crear nuevo calculador CRC-64
     pub fn new() -> Self {
-        Self { value: 0xFFFFFFFFFFFFFFFF }
+        Self {
+            value: 0xFFFFFFFFFFFFFFFF,
+        }
     }
 
     /// Actualizar el CRC con más datos

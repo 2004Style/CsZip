@@ -1,304 +1,107 @@
-# API Reference
+# Referencia de API de CsZip
 
-Esta documentación proporciona una referencia completa de la API pública de CsZip.
+Esta documentación proporciona la referencia de la API pública expuesta por la librería `cszip`.
 
-## Módulos
+---
 
-### `cszip::codec`
+## 📦 Módulo de Códecs (`cszip::codec`)
 
-Módulo de compresión y descompresión.
+Implementa y expone la lógica interna de compresión y descompresión de datos.
 
-#### `Compressor`
+### `Algorithm`
+Enum que representa los algoritmos de compresión soportados en el formato binario.
 
 ```rust
-use cszip::codec::{Compressor, CompressionMethod};
-
-// Crear compresor STORE
-let mut compressor = Compressor::new(CompressionMethod::Store);
-
-// Comprimir datos
-let compressed = compressor.compress(&data)?;
+pub enum Algorithm {
+    Store = 0,          // Copia directa sin compresión
+    Lz77Huffman = 1,    // Compresión LZ77 combinada con codificación Huffman (por defecto)
+    Lz4 = 2,            // Reservado para LZ4
+    Lzma = 3,           // Reservado para LZMA
+    Deflate = 4,        // Reservado para DEFLATE
+}
 ```
 
-#### `Decompressor`
+### `Compressor`
+Estructura encargada de realizar la compresión de bloques en memoria.
 
 ```rust
-use cszip::codec::Decompressor;
+use cszip::codec::{Compressor, Algorithm};
 
-let decompressor = Decompressor::new();
-let decompressed = decompressor.decompress(&compressed, original_size)?;
+// Crear compresor con algoritmo LZ77+Huffman y nivel 6
+let compressor = Compressor::new(Algorithm::Lz77Huffman, 6);
+
+// Comprimir un bloque de datos original
+let compressed_data = compressor.compress_block(&original_data)?;
 ```
 
-#### `Lz77Compressor`
-
-Compresor basado en el algoritmo LZ77.
-
-```rust
-use cszip::codec::{Lz77Compressor, Lz77Config};
-
-// Configuración por defecto
-let compressor = Lz77Compressor::new();
-let tokens = compressor.compress(&data);
-let bytes = compressor.compress_to_bytes(&data);
-
-// Con configuración personalizada
-let config = Lz77Config {
-    window_size: 32768,
-    min_match_length: 3,
-    max_match_length: 258,
-    lazy_matching: true,
-};
-let compressor = Lz77Compressor::with_config(config);
-```
-
-#### `HuffmanEncoder` / `HuffmanDecoder`
+### `Decompressor`
+Estructura encargada de realizar la descompresión de datos.
 
 ```rust
-use cszip::codec::{HuffmanEncoder, HuffmanDecoder};
+use cszip::codec::{Decompressor, Algorithm};
 
-// Codificar
-let mut encoder = HuffmanEncoder::new();
-let encoded = encoder.encode(&data)?;
+// Crear descompresor para el algoritmo de bloques respectivo
+let decompressor = Decompressor::new(Algorithm::Lz77Huffman);
 
-// Decodificar
-let mut decoder = HuffmanDecoder::new();
-let decoded = decoder.decode(&encoded)?;
-```
-
-#### Filtros de Preprocesamiento
-
-```rust
-use cszip::codec::{DeltaFilter, MtfTransform, RleEncoder};
-
-// Filtro Delta
-let filtered = DeltaFilter::encode(&data);
-let original = DeltaFilter::decode(&filtered);
-
-// Move-to-Front
-let mut mtf = MtfTransform::new();
-let encoded = mtf.encode(&data);
-let decoded = mtf.decode(&encoded);
-
-// Run-Length Encoding
-let mut rle = RleEncoder::new();
-let compressed = rle.encode(&data);
-let decompressed = rle.decode(&compressed)?;
+// Descomprimir bloque
+let result = decompressor.decompress_block(&compressed_data)?;
+let raw_data = result.data;
 ```
 
 ---
 
-### `cszip::io`
+## 🖨️ Módulo de E/S (`cszip::io`)
 
-Módulo de I/O para lectura y escritura de archivos `.cz`.
+Manejo optimizado de lectura y escritura de archivos en formato `.cz` por bloques.
 
-#### `CzWriter`
+### `CzWriter`
+Estructura para crear y escribir archivos `.cz` estructurados.
 
 ```rust
 use cszip::io::CzWriter;
 use std::fs::File;
 
-let file = File::create("output.cz")?;
+let file = File::create("salida.cz")?;
 let mut writer = CzWriter::new(file)?;
 
-// Escribir bloques
+// Escribir un bloque de datos
 writer.write_block(&data)?;
-writer.write_block(&more_data)?;
 
-// Finalizar archivo
+// Finalizar la escritura (añade el footer global y firma el archivo)
 writer.finish()?;
 ```
 
-#### `CzReader`
+### `CzReader`
+Estructura para leer y verificar archivos `.cz`.
 
 ```rust
 use cszip::io::CzReader;
 use std::fs::File;
 
-let file = File::open("input.cz")?;
-let mut reader = CzReader::new(file)?;
+// Abrir archivo directamente usando BufReader interno
+let mut reader = CzReader::open("entrada.cz")?;
 
-// Leer header
-let version = reader.version();
-
-// Iterar bloques
-while let Some(block) = reader.next_block()? {
-    process(&block);
-}
-
-// Verificar integridad
-reader.verify()?;
-```
-
-#### Streaming
-
-```rust
-use cszip::io::{StreamingCompressor, StreamingDecompressor, StreamOptions};
-
-// Compresión streaming
-let options = StreamOptions::default()
-    .with_block_size(65536)
-    .with_checksum(true);
-
-let compressor = StreamingCompressor::with_options(writer, options)?;
-compressor.write_chunk(&chunk)?;
-compressor.finish()?;
-
-// Descompresión streaming
-let decompressor = StreamingDecompressor::new(reader)?;
-while let Some(chunk) = decompressor.read_chunk()? {
-    process(&chunk);
+// Iterar y leer bloques secuencialmente hasta el final del archivo
+while let Some(block) = reader.read_block()? {
+    println!("Bloque index: {}, tamaño: {}", block.index, block.data.len());
 }
 ```
 
 ---
 
-### `cszip::format`
+## ⚙️ Módulo de Utilidades (`cszip::utils`)
 
-Estructuras del formato de archivo.
-
-#### `Header`
-
-```rust
-use cszip::format::Header;
-
-let header = Header::new(1, 0);  // versión 1.0
-let bytes = header.to_bytes();
-```
-
-Constantes:
-- `MAGIC`: `[0x43, 0x53, 0x5A, 0x50]` ("CSZP")
-- `SIZE`: 16 bytes
-
-#### `BlockHeader`
-
-```rust
-use cszip::format::{BlockHeader, CompressionMethod, ChecksumType};
-
-let block_header = BlockHeader::new(
-    original_size,
-    compressed_size,
-    CompressionMethod::Store,
-    ChecksumType::Crc32,
-);
-```
-
-SIZE: 12 bytes
-
-#### `Footer`
-
-```rust
-use cszip::format::Footer;
-
-let footer = Footer::new(block_count, total_size_original);
-```
-
-SIZE: 12 bytes
-
----
-
-### `cszip::error`
-
-Tipos de error.
-
-```rust
-use cszip::error::{CzError, Result};
-
-fn my_function() -> Result<()> {
-    // Usar ? para propagar errores
-    Ok(())
-}
-```
-
-Variantes de `CzError`:
-- `Io(std::io::Error)` - Errores de I/O
-- `InvalidMagic` - Magic number inválido
-- `InvalidVersion` - Versión no soportada
-- `InvalidChecksum` - Checksum no coincide
-- `InvalidCompressionMethod` - Método de compresión desconocido
-- `DecompressionError` - Error durante descompresión
-- `FormatError(String)` - Error de formato genérico
-
----
-
-### `cszip::utils`
-
-Funciones de utilidad.
+Funciones comunes para formatear texto y metadatos.
 
 ```rust
 use cszip::utils;
 
-// Formatear tamaños
-let size_str = utils::format_size(1048576);  // "1.00 MB"
+// Formatear bytes en representación legible (Ej: "1.25 MB")
+let text = utils::format_size(1310720);
 
-// Calcular ratio
-let ratio = utils::compression_ratio(1000, 500);  // 50.0
+// Calcular ratio de compresión porcentual
+let ratio = utils::compression_ratio(original_size, compressed_size);
 
-// Calcular ahorro
-let savings = utils::space_savings(1000, 500);  // 50.0
-
-// Verificar extensión
-let is_cz = utils::is_cz_file("archivo.cz");  // true
-
-// Formatear duración
-let duration_str = utils::format_duration(std::time::Duration::from_secs(65));  // "1m 5s"
+// Calcular ahorro de espacio porcentual
+let savings = utils::space_savings(original_size, compressed_size);
 ```
-
----
-
-### `cszip::cli`
-
-Módulo CLI (cuando se compila como binario).
-
-#### `ProgressBar`
-
-```rust
-use cszip::cli::{ProgressBar, ProgressConfig, ProgressStyle};
-
-let config = ProgressConfig::new(total_size)
-    .with_style(ProgressStyle::Bar)
-    .with_width(50);
-
-let pb = ProgressBar::new(config);
-pb.update(processed_bytes);
-pb.finish("¡Completado!");
-```
-
----
-
-## Feature Flags
-
-| Feature | Descripción | Default |
-|---------|-------------|---------|
-| `default` | Características estándar | ✓ |
-| `progress` | Barra de progreso con indicatif | ✗ |
-| `lz4` | Soporte para compresión LZ4 | ✗ |
-| `lzma` | Soporte para compresión LZMA | ✗ |
-
-```toml
-[dependencies]
-cszip = { version = "0.1", features = ["progress"] }
-```
-
----
-
-## Códigos de Error CLI
-
-| Código | Significado |
-|--------|-------------|
-| 0 | Éxito |
-| 1 | Error general |
-| 2 | Argumentos inválidos |
-| 3 | Archivo no encontrado |
-| 4 | Error de I/O |
-| 5 | Archivo corrupto |
-
----
-
-## Ejemplos Completos
-
-Ver el directorio `examples/` para ejemplos completos:
-
-- `basic_compress.rs` - Compresión básica
-- `basic_decompress.rs` - Descompresión básica
-- `streaming.rs` - Operaciones streaming
-- `library_api.rs` - Uso como biblioteca

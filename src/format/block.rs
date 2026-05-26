@@ -74,11 +74,7 @@ impl BlockHeader {
     }
 
     /// Crear un header de bloque de metadata
-    pub fn new_metadata(
-        original_size: u16,
-        compressed_size: u32,
-        adler32: u32,
-    ) -> Result<Self> {
+    pub fn new_metadata(original_size: u16, compressed_size: u32, adler32: u32) -> Result<Self> {
         if original_size == 0 {
             return Err(Error::new(
                 ErrorKind::InvalidBlockSize,
@@ -155,7 +151,10 @@ impl BlockHeader {
     /// Escribir header de bloque a un stream
     pub fn write<W: Write>(&self, writer: &mut W) -> Result<()> {
         writer.write_all(&self.to_bytes()).map_err(|e| {
-            Error::new(ErrorKind::Io, format!("Error escribiendo block header: {}", e))
+            Error::new(
+                ErrorKind::Io,
+                format!("Error escribiendo block header: {}", e),
+            )
         })
     }
 
@@ -288,16 +287,17 @@ impl FileFooter {
         if marker != Self::MARKER {
             return Err(Error::new(
                 ErrorKind::CorruptedFileFooter,
-                format!("Footer marker inválido: esperado 0x{:02X}, encontrado 0x{:02X}", 
-                    Self::MARKER, marker),
+                format!(
+                    "Footer marker inválido: esperado 0x{:02X}, encontrado 0x{:02X}",
+                    Self::MARKER,
+                    marker
+                ),
             ));
         }
 
         // num_blocks es u24 (3 bytes)
-        let num_blocks = ((bytes[1] as u32) << 16) 
-                       | ((bytes[2] as u32) << 8) 
-                       | (bytes[3] as u32);
-        
+        let num_blocks = ((bytes[1] as u32) << 16) | ((bytes[2] as u32) << 8) | (bytes[3] as u32);
+
         let total_raw_size = u32::from_be_bytes([bytes[4], bytes[5], bytes[6], bytes[7]]);
         let checksum = u32::from_be_bytes([bytes[8], bytes[9], bytes[10], bytes[11]]);
 
@@ -324,9 +324,9 @@ impl FileFooter {
 
     /// Escribir footer a un stream
     pub fn write<W: Write>(&self, writer: &mut W) -> Result<()> {
-        writer.write_all(&self.to_bytes()).map_err(|e| {
-            Error::new(ErrorKind::Io, format!("Error escribiendo footer: {}", e))
-        })
+        writer
+            .write_all(&self.to_bytes())
+            .map_err(|e| Error::new(ErrorKind::Io, format!("Error escribiendo footer: {}", e)))
     }
 }
 
@@ -365,7 +365,7 @@ mod tests {
     #[test]
     fn test_block_header_validate() {
         let file_header = Header::new(ALGO_STORE, 16, 1000).unwrap(); // 64 KiB blocks
-        
+
         // Válido: original_size cabe en el bloque
         let block = BlockHeader::new(1000, 800, 0, 6).unwrap();
         assert!(block.validate(&file_header).is_ok());
@@ -374,7 +374,7 @@ mod tests {
     #[test]
     fn test_block_header_validate_too_large() {
         let file_header = Header::new(ALGO_STORE, 10, 1000).unwrap(); // 1 KiB blocks
-        
+
         // Inválido: original_size > block_size
         let block = BlockHeader::new(2000, 1500, 0, 6).unwrap();
         assert!(block.validate(&file_header).is_err());

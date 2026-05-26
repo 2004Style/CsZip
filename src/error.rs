@@ -152,8 +152,8 @@ mod tests {
 
     #[test]
     fn test_error_with_context() {
-        let err = Error::new(ErrorKind::BlockCrcMismatch, "CRC no coincide")
-            .with_context("bloque 5");
+        let err =
+            Error::new(ErrorKind::BlockCrcMismatch, "CRC no coincide").with_context("bloque 5");
         assert!(err.to_string().contains("bloque 5"));
     }
 

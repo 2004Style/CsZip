@@ -27,10 +27,10 @@ pub struct Lz77Config {
 impl Default for Lz77Config {
     fn default() -> Self {
         Self {
-            window_size: 32768,       // 32 KB
-            min_match_length: 3,      // Mínimo 3 bytes para match
-            max_match_length: 258,    // Compatible con DEFLATE
-            search_depth: 64,         // Búsqueda moderada
+            window_size: 32768,    // 32 KB
+            min_match_length: 3,   // Mínimo 3 bytes para match
+            max_match_length: 258, // Compatible con DEFLATE
+            search_depth: 64,      // Búsqueda moderada
         }
     }
 }
@@ -38,8 +38,8 @@ impl Default for Lz77Config {
 impl Lz77Config {
     /// Crear configuración para nivel de compresión específico
     pub fn for_level(level: u8) -> Self {
-        let level = level.min(9).max(1);
-        
+        let level = level.clamp(1, 9);
+
         Self {
             window_size: match level {
                 1..=3 => 4096,
@@ -151,14 +151,11 @@ impl Lz77Compressor {
 
         let mut best_distance = 0;
         let mut best_length = 0;
-        let mut searches = 0;
-
         // Buscar hacia atrás en la ventana
-        for search_pos in (window_start..pos).rev() {
+        for (searches, search_pos) in (window_start..pos).rev().enumerate() {
             if searches >= self.config.search_depth {
                 break;
             }
-            searches += 1;
 
             let length = self.match_length(input, search_pos, pos, max_len);
 
@@ -181,10 +178,16 @@ impl Lz77Compressor {
     }
 
     /// Calcular longitud del match entre dos posiciones
-    fn match_length(&self, input: &[u8], match_pos: usize, current_pos: usize, max_len: usize) -> usize {
+    fn match_length(
+        &self,
+        input: &[u8],
+        match_pos: usize,
+        current_pos: usize,
+        max_len: usize,
+    ) -> usize {
         let mut length = 0;
-        
-        while length < max_len 
+
+        while length < max_len
             && match_pos + length < current_pos  // No sobrepasar posición actual
             && input.get(match_pos + length) == input.get(current_pos + length)
         {
@@ -311,11 +314,7 @@ impl Lz77Decompressor {
                     if distance > output.len() {
                         return Err(Error::new(
                             ErrorKind::InvalidData,
-                            format!(
-                                "Distancia LZ77 inválida: {} > {}",
-                                distance,
-                                output.len()
-                            ),
+                            format!("Distancia LZ77 inválida: {} > {}", distance, output.len()),
                         ));
                     }
 
@@ -368,7 +367,7 @@ mod tests {
         let compressor = Lz77Compressor::new();
         let input = b"abcdefgh";
         let tokens = compressor.compress(input);
-        
+
         // Sin repeticiones, todo son literales
         assert_eq!(tokens.len(), input.len());
         for (i, token) in tokens.iter().enumerate() {
@@ -381,7 +380,7 @@ mod tests {
         let compressor = Lz77Compressor::new();
         let input = b"abcabcabc";
         let tokens = compressor.compress(input);
-        
+
         // Debería encontrar matches
         let has_match = tokens.iter().any(|t| t.is_match());
         assert!(has_match, "Debería detectar repeticiones");
@@ -392,7 +391,7 @@ mod tests {
         let compressor = Lz77Compressor::new();
         let input = b"aaaaaaaaaaaaaaaa"; // 16 'a's
         let tokens = compressor.compress(input);
-        
+
         // Debería ser más corto que el original
         assert!(tokens.len() < input.len());
     }
@@ -401,10 +400,10 @@ mod tests {
     fn test_roundtrip_simple() {
         let compressor = Lz77Compressor::new();
         let input = b"Hello, World!";
-        
+
         let tokens = compressor.compress(input);
         let output = Lz77Decompressor::decompress_tokens(&tokens).unwrap();
-        
+
         assert_eq!(output, input);
     }
 
@@ -412,10 +411,10 @@ mod tests {
     fn test_roundtrip_repetitive() {
         let compressor = Lz77Compressor::new();
         let input = b"abcabcabcabcabc";
-        
+
         let tokens = compressor.compress(input);
         let output = Lz77Decompressor::decompress_tokens(&tokens).unwrap();
-        
+
         assert_eq!(output, input);
     }
 
@@ -423,10 +422,10 @@ mod tests {
     fn test_roundtrip_bytes() {
         let compressor = Lz77Compressor::new();
         let input = b"test data test data test";
-        
+
         let compressed = compressor.compress_to_bytes(input);
         let decompressed = Lz77Decompressor::decompress(&compressed).unwrap();
-        
+
         assert_eq!(decompressed, input);
     }
 
@@ -434,10 +433,10 @@ mod tests {
     fn test_roundtrip_all_bytes() {
         let compressor = Lz77Compressor::new();
         let input: Vec<u8> = (0..=255).collect();
-        
+
         let tokens = compressor.compress(&input);
         let output = Lz77Decompressor::decompress_tokens(&tokens).unwrap();
-        
+
         assert_eq!(output, input);
     }
 
@@ -469,7 +468,10 @@ mod tests {
     fn test_decompress_invalid_distance() {
         let tokens = vec![
             Lz77Token::Literal(b'a'),
-            Lz77Token::Match { distance: 100, length: 5 }, // Distancia inválida
+            Lz77Token::Match {
+                distance: 100,
+                length: 5,
+            }, // Distancia inválida
         ];
         let result = Lz77Decompressor::decompress_tokens(&tokens);
         assert!(result.is_err());
@@ -478,11 +480,11 @@ mod tests {
     #[test]
     fn test_compression_effectiveness() {
         let compressor = Lz77Compressor::with_level(6);
-        
+
         // Datos muy repetitivos
         let input: Vec<u8> = vec![0xAA; 1000];
         let compressed = compressor.compress_to_bytes(&input);
-        
+
         // Debería comprimir significativamente
         assert!(compressed.len() < input.len() / 2);
     }

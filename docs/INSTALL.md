@@ -1,181 +1,101 @@
-# Instalación
+# Guía de Instalación de CsZip
 
-## Requisitos
-
-| Componente | Mínimo |
-|------------|--------|
-| Rust | 1.70+ |
-| RAM | 512 MB |
-| Disco | 100 MB |
+`cszip` se puede instalar de forma automatizada mediante scripts (recomendado para la mayoría de los usuarios) o compilando manualmente desde el código fuente.
 
 ---
 
-## Binarios pre-compilados (más rápido)
+## 🚀 Método 1: Instalación Automatizada (Recomendado)
 
-Descarga desde [GitHub Releases](https://github.com/tu-usuario/cszip/releases/latest) el binario para tu sistema:
+El instalador detectará automáticamente el sistema operativo (Linux, macOS, Windows) y la arquitectura de CPU (AMD64, ARM64) para instalar el binario correcto y configurarlo bajo los directorios de usuario estándar (cumpliendo con la especificación XDG).
 
+### En Linux y macOS (POSIX)
+
+Ejecuta el siguiente comando en tu terminal:
 ```bash
-# Linux x86_64
-curl -LO https://github.com/tu-usuario/cszip/releases/latest/download/cszip-linux-x86_64.tar.gz
-tar -xzf cszip-linux-x86_64.tar.gz
-sudo mv cszip /usr/local/bin/
-
-# Linux x86_64 (estático, sin dependencias)
-curl -LO https://github.com/tu-usuario/cszip/releases/latest/download/cszip-linux-x86_64-musl.tar.gz
-tar -xzf cszip-linux-x86_64-musl.tar.gz
-sudo mv cszip /usr/local/bin/
-
-# macOS
-curl -LO https://github.com/tu-usuario/cszip/releases/latest/download/cszip-macos-aarch64.tar.gz
-tar -xzf cszip-macos-aarch64.tar.gz
-sudo mv cszip /usr/local/bin/
+curl -fsSL https://raw.githubusercontent.com/user/CsZip/main/install.sh | sh
 ```
 
-Windows: descarga `cszip-windows-x86_64.zip`, extrae y añade la carpeta al `PATH`.
+- **Ubicación del binario:** `$HOME/.local/bin/cszip`
+- **Ubicación de recursos:** `$HOME/.local/share/cszip/`
+- **PATH:** Si `$HOME/.local/bin` no está en tu variable de entorno PATH, el instalador te mostrará las instrucciones para agregarlo agregando una línea en tu `~/.bashrc` o `~/.zshrc`.
 
-Verifica:
+### En Windows (PowerShell)
 
-```bash
-cszip --version
-```
-
-### Verificar integridad
-
-```bash
-curl -LO https://github.com/tu-usuario/cszip/releases/latest/download/checksums.sha256
-sha256sum -c checksums.sha256
-```
-
----
-
-## Compilar desde fuente
-
-### Linux
-
-**Ubuntu/Debian:**
-
-```bash
-sudo apt update
-sudo apt install -y build-essential curl git
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-source "$HOME/.cargo/env"
-git clone https://github.com/tu-usuario/cszip.git
-cd cszip
-cargo build --release
-sudo cp target/release/cszip /usr/local/bin/
-```
-
-**Fedora:**
-
-```bash
-sudo dnf groupinstall "Development Tools"
-sudo dnf install curl git
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-source "$HOME/.cargo/env"
-git clone https://github.com/tu-usuario/cszip.git
-cd cszip
-cargo build --release
-```
-
-**Arch:**
-
-```bash
-sudo pacman -S base-devel rust git
-git clone https://github.com/tu-usuario/cszip.git
-cd cszip
-cargo build --release
-```
-
-### macOS
-
-```bash
-xcode-select --install  # herramientas de compilación
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-source "$HOME/.cargo/env"
-git clone https://github.com/tu-usuario/cszip.git
-cd cszip
-cargo build --release
-sudo cp target/release/cszip /usr/local/bin/
-```
-
-### Windows
-
-1. Instalar [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) (seleccionar "Desarrollo de escritorio con C++")
-2. Instalar Rust desde [rustup.rs](https://rustup.rs)
-3. En PowerShell:
-
+Ejecuta la siguiente línea en PowerShell como usuario normal:
 ```powershell
-git clone https://github.com/tu-usuario/cszip.git
-cd cszip
-cargo build --release
-# Binario en target\release\cszip.exe
+powershell -ExecutionPolicy Bypass -Command "Invoke-Expression (Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/user/CsZip/main/install.ps1' -UseBasicParsing).Content"
+```
+
+- **Ubicación del binario:** `$HOME\.local\bin\cszip.exe`
+- **Ubicación de recursos:** `$HOME\.local\share\cszip\`
+- **PATH:** El script te dará la instrucción de actualizar tu variable de entorno PATH de usuario si no está configurada.
+
+---
+
+## 🛠️ Método 2: Compilar e Instalar desde Fuente (Desarrolladores)
+
+Si deseas compilar la herramienta tú mismo u optimizarla para tu arquitectura de CPU específica, sigue las siguientes instrucciones.
+
+### 1. Clonar el repositorio
+```bash
+git clone https://github.com/user/CsZip.git
+cd CsZip
+```
+
+### 2. Configuración del Entorno de Desarrollo y Dependencias
+
+Ejecuta el script de desarrollo para instalar de forma segura las dependencias necesarias de compilación (como `git`, `curl`, `unrar`, etc.) y configurar los componentes linter (`clippy` y `rustfmt`).
+
+**En Linux (Debian, Ubuntu, Mint, Kali, Fedora, RHEL, Arch Linux) y macOS:**
+```bash
+chmod +x scripts/*.sh install.sh
+./scripts/dev.sh
+```
+*El script detectará tu distribución de Linux exacta o macOS e invocará a su gestor de paquetes (`apt`, `dnf`, `pacman` o `brew`) solicitando permisos de root sólo si es estrictamente necesario.*
+
+**En Windows (PowerShell):**
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\dev.ps1
+```
+
+### 3. Compilar para Release
+
+**En Linux / macOS:**
+```bash
+./scripts/build.sh
+```
+*Esto generará el paquete compilado en `dist/cszip-<os>-<arch>.tar.gz`.*
+
+**En Windows (PowerShell):**
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\build.ps1
+```
+*Esto generará el paquete en `dist/cszip-windows-<arch>.zip`.*
+
+### 4. Ejecutar el Instalador Local
+
+Una vez construido el paquete en el directorio `dist/`, ejecuta el instalador para copiar el binario final local a tu PATH.
+
+**En Linux / macOS:**
+```bash
+./install.sh
+```
+
+**En Windows (PowerShell):**
+```powershell
+powershell -ExecutionPolicy Bypass -File .\install.ps1
 ```
 
 ---
 
-## Compilación optimizada
+## ❓ Solución de Problemas
 
-```bash
-# Optimizar para tu CPU específica (máxima velocidad)
-RUSTFLAGS="-C target-cpu=native" cargo build --release
-```
+### Comando `cszip` no encontrado tras la instalación
+- Asegúrate de reiniciar tu terminal o recargar tu perfil de configuración (`source ~/.bashrc` o `source ~/.zshrc` en Linux/macOS).
+- En Windows, asegúrate de haber ejecutado la línea que actualiza el PATH de tu entorno de usuario y haber abierto una nueva terminal de PowerShell o CMD.
 
-### Binario estático (Linux)
-
-Sin dependencias externas, funciona en cualquier distro Linux:
-
-```bash
-rustup target add x86_64-unknown-linux-musl
-sudo apt install musl-tools  # Ubuntu/Debian
-cargo build --release --target x86_64-unknown-linux-musl
-# Binario: target/x86_64-unknown-linux-musl/release/cszip
-```
-
-### Cross-compilation macOS
-
-```bash
-# Apple Silicon desde Intel (o viceversa)
-rustup target add aarch64-apple-darwin
-cargo build --release --target aarch64-apple-darwin
-
-# Universal binary (ambas arquitecturas)
-rustup target add x86_64-apple-darwin aarch64-apple-darwin
-cargo build --release --target x86_64-apple-darwin
-cargo build --release --target aarch64-apple-darwin
-lipo -create \
-  target/x86_64-apple-darwin/release/cszip \
-  target/aarch64-apple-darwin/release/cszip \
-  -output cszip-universal
-```
-
----
-
-## Instalar globalmente
-
-```bash
-# Opción 1: cargo install (compila e instala en ~/.cargo/bin)
-cargo install --path .
-
-# Opción 2: copiar manualmente
-sudo cp target/release/cszip /usr/local/bin/  # Linux/macOS
-```
-
-## Desinstalar
-
-```bash
-cargo uninstall cszip  # si se instaló con cargo install
-# o
-sudo rm /usr/local/bin/cszip
-```
-
----
-
-## Solución de problemas
-
-**`cargo: command not found`** — Ejecuta `source "$HOME/.cargo/env"` o reinicia la terminal.
-
-**`linker cc not found`** — Instala herramientas de compilación: `sudo apt install build-essential` (Ubuntu) o `xcode-select --install` (macOS).
-
-**Error de compilación musl** — Instala `musl-tools`: `sudo apt install musl-tools`.
-
-**Lento al compilar** — Es normal la primera vez. Las compilaciones siguientes son incrementales y más rápidas.
+### Detección de 'unrar' en Windows
+- Para extraer archivos `.rar`, `cszip` requiere la utilidad de consola `unrar.exe` en tu PATH. Puedes instalarla fácilmente ejecutando:
+  ```powershell
+  winget install -e --id RARLab.UnRAR
+  ```

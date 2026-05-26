@@ -1,4 +1,4 @@
-﻿# 🏗️ Arquitectura de CsZip - Guía de Implementación
+# 🏗️ Arquitectura de CsZip - Guía de Implementación
 
 **Versión:** 1.0  
 **Última revisión:** 7 Febrero 2026
@@ -29,6 +29,9 @@ CsZip/
 │   │
 │   ├── error.rs            # Tipos de error y manejo
 │   ├── utils.rs            # Funciones de utilidad
+│   │
+│   ├── utils/              # Módulo de archivado de formatos externos
+│   │   └── archive.rs      # Compresión/descompresión ZIP nativa y extracción RAR
 │   │
 │   ├── format/             # Defnición del formato
 │   │   ├── mod.rs
@@ -718,6 +721,27 @@ impl Crc64 {
     }
 }
 ```
+
+---
+
+### 4. `codec/mod.rs` - Módulo de Codificadores
+**Responsabilidad:** Implementar la lógica interna de compresión y descompresión.
+
+- **`compressor.rs`**: Controlador del motor de compresión por bloques. Habilita y ejecuta la compresión nativa utilizando `lz77` y `huffman` cuando el algoritmo configurado es `Algorithm::Lz77Huffman`.
+- **`decompressor.rs`**: Controlador del motor de descompresión por bloques. Descomprime flujos previamente codificados.
+- **`lz77.rs` / `huffman.rs`**: Módulos independientes que implementan el algoritmo de ventana deslizante LZ77 y la codificación Huffman estática respectivamente.
+
+### 5. `utils/archive.rs` - Soporte de Archivos Externos
+**Responsabilidad:** Proveer abstracción para comprimir y extraer otros formatos de archivo.
+
+- **Compresión/Descompresión ZIP**: Implementada nativamente mediante el uso del crate puro de Rust `zip`.
+- **Extracción RAR**: Ejecuta de forma de subproceso controlada la herramienta CLI del sistema `unrar` y valida su salida. Lanza mensajes guiados y warnings si la herramienta no está disponible en la máquina.
+
+### 6. `cli/commands.rs` - Intercepción de CLI
+**Responsabilidad:** Redirigir la compresión y descompresión en función de la extensión del archivo destino u origen.
+
+- Al ejecutar `cszip compress`, si la salida contiene `.zip`, se intercepta el flujo y se delega a `archive::zip_compress`.
+- Al ejecutar `cszip decompress`, si el archivo de entrada termina en `.zip`, delega a `archive::zip_decompress`. Si termina en `.rar`, delega a `archive::rar_decompress`. En otros casos, procesa como un archivo `.cz` normal.
 
 ---
 

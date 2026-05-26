@@ -7,5 +7,7 @@ pub mod streaming;
 pub mod writer;
 
 pub use reader::CzReader;
-pub use streaming::{StreamingCompressor, StreamingDecompressor, StreamOptions, StreamProgress, StreamStats};
+pub use streaming::{
+    StreamOptions, StreamProgress, StreamStats, StreamingCompressor, StreamingDecompressor,
+};
 pub use writer::CzWriter;

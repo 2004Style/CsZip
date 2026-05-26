@@ -1,4 +1,4 @@
-﻿# 🔧 Especificación del Formato CsZip (.cz)
+# 🔧 Especificación del Formato CsZip (.cz)
 
 **Versión:** 1.0  
 **Estado:** Especificación Formal  
@@ -147,7 +147,7 @@ Bit  Flag Name                Description
 Valor  Algoritmo           Descripción
 ─────  ──────────────────  ─────────────────────────────────────────
 0      Almacenamiento      Sin compresión (solo headers + datos)
-1      LZ77 + Huffman      Referencia básica
+1      LZ77 + Huffman      Algoritmo por defecto (activo)
 2      LZ4-style           Compresión rápida
 3      LZMA-style          Compresión fuerte (lenta)
 4      Deflate-style       Compatible DEFLATE (RFC 1951)

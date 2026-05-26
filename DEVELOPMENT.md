@@ -1,4 +1,4 @@
-﻿# 🚀 Roadmap de Desarrollo - CsZip
+# 🚀 Roadmap de Desarrollo - CsZip
 
 **Versión:** 1.0  
 **Estado:** Plan de Implementación  
@@ -24,11 +24,11 @@ El desarrollo de CsZip se divide en **4 fases principales** con **~50-60 tareas 
 
 | Fase  | Duración Est. | Objetivo Principal                  | Status |
 | ----- | ------------- | ----------------------------------- | ------ |
-| **0** | 1-2 días      | Proyecto base + dependencias        | ⏳     |
-| **1** | 3-4 semanas   | MVP funcional (compress/decompress) | ⏳     |
-| **2** | 2-3 semanas   | Optimización y rendimiento          | ⏳     |
-| **3** | 2-3 semanas   | Extensiones opcionales              | ⏳     |
-| **4** | 2-3 semanas   | Auditoría y release                 | ⏳     |
+| **0** | 1-2 días      | Proyecto base + dependencias        | ✅     |
+| **1** | 3-4 semanas   | MVP funcional (compress/decompress) | ✅     |
+| **2** | 2-3 semanas   | Optimización y rendimiento          | ✅     |
+| **3** | 2-3 semanas   | Extensiones opcionales              | ✅     |
+| **4** | 2-3 semanas   | Auditoría y release                 | ✅     |
 
 ---
 
@@ -777,13 +777,13 @@ fn main() -> Result<()> {
 
 | Semana | Fase    | Tareas                | Entregables    | Status |
 | ------ | ------- | --------------------- | -------------- | ------ |
-| 1-2    | 0       | Configuración base    | Proyecto listo | ⏳     |
-| 3-6    | 1.1-1.3 | Formatos + algoritmos | MVP sin CLI    | ⏳     |
-| 7-8    | 1.4-1.6 | CLI + API             | MVP completo   | ⏳     |
-| 9-10   | 1.7-1.9 | Tests e integración   | v0.1.0-alpha   | ⏳     |
-| 11-12  | 2       | Optimización          | v0.2.0-beta    | ⏳     |
-| 13-14  | 3       | Extensiones           | v0.3.0-rc      | ⏳     |
-| 15-16  | 4       | Hardening             | v1.0.0         | ⏳     |
+| 1-2    | 0       | Configuración base    | Proyecto listo | ✅     |
+| 3-6    | 1.1-1.3 | Formatos + algoritmos | MVP sin CLI    | ✅     |
+| 7-8    | 1.4-1.6 | CLI + API             | MVP completo   | ✅     |
+| 9-10   | 1.7-1.9 | Tests e integración   | v0.1.0-alpha   | ✅     |
+| 11-12  | 2       | Optimización          | v0.2.0-beta    | ✅     |
+| 13-14  | 3       | Extensiones           | v0.3.0-rc      | ✅     |
+| 15-16  | 4       | Hardening             | v1.0.0         | ✅     |
 
 ---
 

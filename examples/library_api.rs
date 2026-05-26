@@ -9,12 +9,11 @@
 use std::io::Cursor;
 
 use cszip::codec::{
-    Algorithm, CompressionLevel,
-    Lz77Compressor, Lz77Decompressor, Lz77Config,
-    HuffmanEncoder, HuffmanDecoder,
+    Algorithm, CompressionLevel, HuffmanDecoder, HuffmanEncoder, Lz77Compressor, Lz77Config,
+    Lz77Decompressor,
 };
-use cszip::format::{Header, BlockHeader, FileFooter};
-use cszip::format::checksum::{Crc32, Crc64, Adler32};
+use cszip::format::checksum::{Adler32, Crc32, Crc64};
+use cszip::format::{BlockHeader, FileFooter, Header};
 use cszip::io::{CzReader, CzWriter};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -42,10 +41,10 @@ fn example_basic_compression() -> Result<(), cszip::Error> {
     {
         let cursor = Cursor::new(&mut compressed);
         let mut writer = CzWriter::new(cursor)?;
-        
+
         // Escribir datos como un bloque
         writer.write_block(original_data)?;
-        
+
         // Finalizar (escribe footer)
         let stats = writer.finish()?;
         println!("  Estadísticas de compresión:");
@@ -57,7 +56,7 @@ fn example_basic_compression() -> Result<(), cszip::Error> {
     // Descomprimir
     let cursor = Cursor::new(&compressed);
     let mut reader = CzReader::new(cursor)?;
-    
+
     // Leer bloque
     if let Some(block) = reader.read_block()? {
         println!("  Datos recuperados: {} bytes", block.data.len());
@@ -98,7 +97,10 @@ fn example_checksums() {
 
     // Verificación
     let is_valid = Crc32::verify(data, crc32);
-    println!("  Verificación CRC-32: {}", if is_valid { "✓ OK" } else { "✗ Fallo" });
+    println!(
+        "  Verificación CRC-32: {}",
+        if is_valid { "✓ OK" } else { "✗ Fallo" }
+    );
 
     println!();
 }
@@ -145,7 +147,7 @@ fn example_huffman() -> Result<(), cszip::Error> {
 
     let mut encoder = HuffmanEncoder::new();
     let encoded = encoder.encode(data)?;
-    
+
     println!("  Original: {} bytes", data.len());
     println!("  Codificado: {} bytes", encoded.len());
 
@@ -164,14 +166,17 @@ fn example_format_structures() -> Result<(), cszip::Error> {
 
     // Crear header
     let header = Header::new(
-        0,      // STORE algorithm
-        15,     // 32KB blocks (2^15)
-        1000,   // 10x max expansion
+        0,    // STORE algorithm
+        15,   // 32KB blocks (2^15)
+        1000, // 10x max expansion
     )?;
 
     println!("  Header:");
     println!("    Magic: 0x{:04X}", header.magic);
-    println!("    Versión: {}.{}", header.version_major, header.version_minor);
+    println!(
+        "    Versión: {}.{}",
+        header.version_major, header.version_minor
+    );
     println!("    Algoritmo: {}", header.compression_algo);
     println!("    Tamaño de bloque: {} bytes", header.block_size());
 
@@ -210,16 +215,16 @@ fn example_full_roundtrip() -> Result<(), cszip::Error> {
 
     // Crear datos de prueba variados
     let mut data = Vec::new();
-    
+
     // Texto
     data.extend_from_slice(b"Este es texto normal. ");
-    
+
     // Datos repetitivos
     data.extend(std::iter::repeat(b'X').take(100));
-    
+
     // Secuencia numérica
     data.extend((0u8..=255).cycle().take(256));
-    
+
     // Más texto
     data.extend_from_slice(b" Fin de los datos de prueba.");
 
@@ -230,11 +235,8 @@ fn example_full_roundtrip() -> Result<(), cszip::Error> {
         let mut compressed = Vec::new();
         {
             let cursor = Cursor::new(&mut compressed);
-            let mut writer = CzWriter::new_with_options(
-                cursor,
-                Algorithm::Store,
-                CompressionLevel::new(5)?,
-            )?;
+            let mut writer =
+                CzWriter::new_with_options(cursor, Algorithm::Store, CompressionLevel::new(5)?)?;
 
             // Escribir en múltiples bloques pequeños
             for chunk in data.chunks(100) {
@@ -242,8 +244,10 @@ fn example_full_roundtrip() -> Result<(), cszip::Error> {
             }
 
             let stats = writer.finish()?;
-            println!("  {} - Comprimido: {} bytes, {} bloques",
-                algo_name, stats.compressed_size, stats.block_count);
+            println!(
+                "  {} - Comprimido: {} bytes, {} bloques",
+                algo_name, stats.compressed_size, stats.block_count
+            );
         }
 
         // Descomprimir
@@ -251,7 +255,7 @@ fn example_full_roundtrip() -> Result<(), cszip::Error> {
         {
             let cursor = Cursor::new(&compressed);
             let mut reader = CzReader::new(cursor)?;
-            
+
             while let Some(block) = reader.read_block()? {
                 decompressed.extend(&block.data);
             }

@@ -11,12 +11,12 @@ use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
 
-use cszip::io::CzWriter;
 use cszip::codec::{Algorithm, CompressionLevel};
+use cszip::io::CzWriter;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().collect();
-    
+
     if args.len() < 2 {
         eprintln!("Uso: {} <archivo_entrada> [archivo_salida]", args[0]);
         eprintln!();
@@ -46,11 +46,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut reader = BufReader::new(input_file);
 
     // Crear archivo de salida con CzWriter
-    let mut writer = CzWriter::create_with_options(
-        &output_path,
-        Algorithm::Store,
-        CompressionLevel::default(),
-    )?;
+    let mut writer =
+        CzWriter::create_with_options(&output_path, Algorithm::Store, CompressionLevel::default())?;
 
     // Comprimir usando stream
     writer.write_stream(&mut reader)?;

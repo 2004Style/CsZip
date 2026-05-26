@@ -11,11 +11,11 @@ use std::env;
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Cursor};
 
-use cszip::io::{StreamingCompressor, StreamingDecompressor, StreamOptions};
+use cszip::io::{StreamOptions, StreamingCompressor, StreamingDecompressor};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().collect();
-    
+
     if args.len() < 4 {
         eprintln!("Uso: {} <compress|decompress> <entrada> <salida>", args[0]);
         eprintln!();
@@ -46,8 +46,7 @@ fn compress_streaming(input: &str, output: &str) -> Result<(), Box<dyn std::erro
     println!("Comprimiendo en modo streaming: {} -> {}", input, output);
 
     // Configurar opciones
-    let options = StreamOptions::default()
-        .with_block_size(32 * 1024); // 32KB por bloque
+    let options = StreamOptions::default().with_block_size(32 * 1024); // 32KB por bloque
 
     // Abrir archivos
     let input_file = File::open(input)?;
@@ -58,13 +57,18 @@ fn compress_streaming(input: &str, output: &str) -> Result<(), Box<dyn std::erro
     let writer = BufWriter::new(output_file);
 
     // Crear compresor de streaming con callback de progreso
-    let mut compressor = StreamingCompressor::new(writer, options)?
-        .with_progress(Box::new(move |progress| {
+    let mut compressor =
+        StreamingCompressor::new(writer, options)?.with_progress(Box::new(move |progress| {
             if let Some(pct) = progress.percentage() {
-                eprint!("\rProgreso: {:.1}% - {} bloques", pct, progress.blocks_processed);
+                eprint!(
+                    "\rProgreso: {:.1}% - {} bloques",
+                    pct, progress.blocks_processed
+                );
             } else {
-                eprint!("\rProcesados: {} bytes - {} bloques", 
-                    progress.bytes_processed, progress.blocks_processed);
+                eprint!(
+                    "\rProcesados: {} bytes - {} bloques",
+                    progress.bytes_processed, progress.blocks_processed
+                );
             }
         }));
 
@@ -100,8 +104,8 @@ fn decompress_streaming(input: &str, output: &str) -> Result<(), Box<dyn std::er
     let mut writer = BufWriter::new(output_file);
 
     // Crear descompresor de streaming
-    let mut decompressor = StreamingDecompressor::new(reader, options)?
-        .with_progress(Box::new(|progress| {
+    let mut decompressor =
+        StreamingDecompressor::new(reader, options)?.with_progress(Box::new(|progress| {
             eprint!("\rProcesados: {} bloques", progress.blocks_processed);
         }));
 
@@ -123,7 +127,7 @@ fn decompress_streaming(input: &str, output: &str) -> Result<(), Box<dyn std::er
 fn memory_streaming_example() -> Result<(), cszip::Error> {
     let data = b"Este es un ejemplo de datos que se comprimiran en memoria \
                  usando streaming. Repite: datos datos datos datos.";
-    
+
     let options = StreamOptions::default();
 
     // Comprimir a buffer en memoria

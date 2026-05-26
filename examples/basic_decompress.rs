@@ -15,7 +15,7 @@ use cszip::io::CzReader;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().collect();
-    
+
     if args.len() < 2 {
         eprintln!("Uso: {} <archivo.cz> [archivo_salida]", args[0]);
         eprintln!();
@@ -25,7 +25,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let input_path = Path::new(&args[1]);
-    
+
     // Determinar archivo de salida
     let output_path = if args.len() > 2 {
         args[2].clone()
@@ -45,7 +45,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         std::process::exit(1);
     }
 
-    println!("Descomprimiendo: {} -> {}", input_path.display(), output_path);
+    println!(
+        "Descomprimiendo: {} -> {}",
+        input_path.display(),
+        output_path
+    );
 
     // Abrir archivo comprimido
     let mut reader = CzReader::open(input_path)?;
@@ -55,7 +59,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let algorithm = cszip::codec::Algorithm::from_id(header.compression_algo)?;
     println!();
     println!("Información del archivo:");
-    println!("  Versión:    {}.{}", header.version_major, header.version_minor);
+    println!(
+        "  Versión:    {}.{}",
+        header.version_major, header.version_minor
+    );
     println!("  Algoritmo:  {}", algorithm.name());
     println!("  Tamaño de bloque: {} bytes", header.block_size());
 
