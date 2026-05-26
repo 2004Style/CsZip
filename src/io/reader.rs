@@ -369,7 +369,7 @@ mod tests {
             let cursor = Cursor::new(&mut buffer);
             let mut writer = CzWriter::new(cursor).unwrap();
             for block in &blocks {
-                writer.write_block(*block).unwrap();
+                writer.write_block(block).unwrap();
             }
             writer.finish().unwrap();
         }

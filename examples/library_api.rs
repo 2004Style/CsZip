@@ -1,6 +1,7 @@
 //! Ejemplo de uso de la API de biblioteca
 //!
 //! Muestra las diferentes formas de usar CsZip como biblioteca.
+#![allow(clippy::manual_repeat_n)]
 //!
 //! ```bash
 //! cargo run --example library_api

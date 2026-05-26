@@ -156,6 +156,7 @@ fn bench_decompress_with_verification(c: &mut Criterion) {
     group.finish();
 }
 
+#[allow(clippy::manual_div_ceil)]
 fn bench_decompress_multiple_blocks(c: &mut Criterion) {
     let mut group = c.benchmark_group("decompress_multi_block");
 

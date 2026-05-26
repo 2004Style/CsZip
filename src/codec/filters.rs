@@ -441,7 +441,7 @@ mod tests {
 
         let transformed = MtfTransform::apply(&input);
         // Primer 'a' tiene índice alto, resto son 0
-        assert_eq!(transformed[0], b'a' as u8);
+        assert_eq!(transformed[0], b'a');
         for &b in &transformed[1..] {
             assert_eq!(b, 0);
         }

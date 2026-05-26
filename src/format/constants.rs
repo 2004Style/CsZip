@@ -181,6 +181,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::assertions_on_constants)]
     fn test_block_size_range() {
         assert!(MIN_BLOCK_SIZE_LOG2 < MAX_BLOCK_SIZE_LOG2);
         assert!(DEFAULT_BLOCK_SIZE_LOG2 >= MIN_BLOCK_SIZE_LOG2);
@@ -188,6 +189,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::assertions_on_constants)]
     fn test_expansion_range() {
         assert!(MIN_EXPANSION < MAX_EXPANSION);
         assert!(DEFAULT_EXPANSION >= MIN_EXPANSION);

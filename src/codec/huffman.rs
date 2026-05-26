@@ -500,6 +500,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::manual_repeat_n)]
     fn test_compression_skewed() {
         let mut encoder = HuffmanEncoder::new();
         // Datos con frecuencia muy desigual - deberían comprimir bien

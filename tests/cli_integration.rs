@@ -29,14 +29,13 @@ impl CliRunner {
     fn find_binary() -> PathBuf {
         // Buscar en target/debug o target/release
         let manifest_dir = env!("CARGO_MANIFEST_DIR");
-        let debug_path = PathBuf::from(manifest_dir).join("target/debug/cszip.exe");
-        let release_path = PathBuf::from(manifest_dir).join("target/release/cszip.exe");
-
-        // En sistemas Unix no tiene .exe
-        #[cfg(not(windows))]
-        let debug_path = PathBuf::from(manifest_dir).join("target/debug/cszip");
-        #[cfg(not(windows))]
-        let release_path = PathBuf::from(manifest_dir).join("target/release/cszip");
+        let bin_name = if cfg!(windows) { "cszip.exe" } else { "cszip" };
+        let debug_path = PathBuf::from(manifest_dir)
+            .join("target/debug")
+            .join(bin_name);
+        let release_path = PathBuf::from(manifest_dir)
+            .join("target/release")
+            .join(bin_name);
 
         if debug_path.exists() {
             debug_path
@@ -190,7 +189,7 @@ mod compress_tests {
         assert!(output.status.success());
         let stdout = String::from_utf8_lossy(&output.stdout);
         // Con verbose debería mostrar información
-        assert!(stdout.len() > 0 || output.stderr.len() > 0);
+        assert!(!stdout.is_empty() || !output.stderr.is_empty());
     }
 
     #[test]
@@ -381,8 +380,8 @@ mod info_tests {
         assert!(
             stdout.contains("CZ")
                 || stdout.contains("version")
-                || stdout.len() > 0
-                || output.stderr.len() > 0
+                || !stdout.is_empty()
+                || !output.stderr.is_empty()
         );
     }
 
