@@ -29,6 +29,7 @@ mod constants_tests {
     }
 
     #[test]
+    #[allow(clippy::assertions_on_constants)]
     fn test_block_size_limits() {
         assert!(MIN_BLOCK_SIZE_LOG2 < MAX_BLOCK_SIZE_LOG2);
         assert_eq!(MIN_BLOCK_SIZE_LOG2, 9); // 512 bytes
@@ -38,6 +39,7 @@ mod constants_tests {
     }
 
     #[test]
+    #[allow(clippy::assertions_on_constants)]
     fn test_expansion_limits() {
         assert!(MIN_EXPANSION < MAX_EXPANSION);
         assert_eq!(MIN_EXPANSION, 100); // 1x
