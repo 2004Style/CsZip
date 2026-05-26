@@ -141,6 +141,7 @@ pub fn log2(n: usize) -> u32 {
 }
 
 /// Alinea un valor hacia arriba al múltiplo más cercano
+#[allow(clippy::manual_div_ceil)]
 pub fn align_up(value: usize, alignment: usize) -> usize {
     if alignment == 0 {
         return value;

@@ -175,6 +175,7 @@ impl ProgressBar {
     }
 
     /// Renderizar barra de progreso
+    #[allow(clippy::manual_repeat_n)]
     fn render_bar(&self) -> String {
         let percentage = self.percentage();
         let filled = (percentage / 100.0 * self.config.width as f64) as usize;

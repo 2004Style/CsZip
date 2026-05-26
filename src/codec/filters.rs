@@ -334,6 +334,7 @@ impl RleEncoder {
     }
 
     /// Decodificar RLE
+    #[allow(clippy::manual_repeat_n)]
     pub fn decode(data: &[u8]) -> Result<Vec<u8>> {
         let mut output = Vec::new();
         let mut i = 0;
