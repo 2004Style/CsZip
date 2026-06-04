@@ -127,10 +127,6 @@ install_deps() {
     esac
 }
 
-install_deps() { :; } # Se omitirá el hook intermedio vacío
-install_deps_actual() {
-    install_deps
-}
 # Ejecutar la lógica de dependencias
 install_deps
 

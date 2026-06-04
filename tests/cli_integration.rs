@@ -27,9 +27,30 @@ impl CliRunner {
     }
 
     fn find_binary() -> PathBuf {
-        // Buscar en target/debug o target/release
-        let manifest_dir = env!("CARGO_MANIFEST_DIR");
         let bin_name = if cfg!(windows) { "cszip.exe" } else { "cszip" };
+
+        // 0. Intentar usar la variable de entorno CARGO_BIN_EXE_<name> provista por Cargo
+        if let Some(cargo_bin) = option_env!("CARGO_BIN_EXE_cszip") {
+            let candidate = PathBuf::from(cargo_bin);
+            if candidate.exists() {
+                return candidate;
+            }
+        }
+
+        // 1. Intentar encontrar el ejecutable en el directorio de salida del perfil de compilación del test
+        if let Ok(exe_path) = std::env::current_exe() {
+            if let Some(deps_dir) = exe_path.parent() {
+                if let Some(profile_dir) = deps_dir.parent() {
+                    let candidate = profile_dir.join(bin_name);
+                    if candidate.exists() {
+                        return candidate;
+                    }
+                }
+            }
+        }
+
+        // 2. Fallbacks alternativos
+        let manifest_dir = env!("CARGO_MANIFEST_DIR");
         let debug_path = PathBuf::from(manifest_dir)
             .join("target/debug")
             .join(bin_name);
@@ -42,8 +63,7 @@ impl CliRunner {
         } else if release_path.exists() {
             release_path
         } else {
-            // Fallback para cargo test
-            PathBuf::from("cszip")
+            PathBuf::from(bin_name)
         }
     }
 

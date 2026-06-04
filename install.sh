@@ -103,7 +103,8 @@ if [ ! -d "$EXTRACTED_DIR" ]; then
 fi
 
 echo "Copiando binario a ${BIN_DIR}..."
-install -m 755 "${EXTRACTED_DIR}/bin/${BIN_NAME}" "${BIN_DIR}/${BIN_NAME}"
+cp "${EXTRACTED_DIR}/bin/${BIN_NAME}" "${BIN_DIR}/${BIN_NAME}"
+chmod 755 "${BIN_DIR}/${BIN_NAME}"
 
 echo "Copiando recursos adicionales a ${DATA_DIR}..."
 if [ -d "${EXTRACTED_DIR}/share/${APP_NAME}" ]; then
