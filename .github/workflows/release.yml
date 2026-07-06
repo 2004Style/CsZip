@@ -51,10 +51,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Normalize version
-        id: version
-        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
-
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -86,10 +82,10 @@ jobs:
       - name: Create archive
         shell: bash
         env:
-          VERSION: ${{ steps.version.outputs.VERSION }}
           SUFFIX: ${{ matrix.suffix }}
           EXT: ${{ matrix.ext }}
         run: |
+          VERSION="${GITHUB_REF_NAME#v}"
           PACKAGE_NAME="cszip-${VERSION}-${SUFFIX}.${EXT}"
           cd dist
           if [[ "$EXT" == "zip" ]]; then
