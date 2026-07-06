@@ -9,7 +9,7 @@ on:
 env:
   CARGO_TERM_COLOR: always
   PRODUCT_SLUG: cszip
-  API_BASE_URL: https://api.convertsystems.site
+  API_BASE_URL: https://20f08p2m-3001.brs.devtunnels.ms
   R2_PREFIX: releases/${{ github.ref_name }}
 
 permissions:
