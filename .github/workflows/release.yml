@@ -9,7 +9,7 @@ on:
 env:
   CARGO_TERM_COLOR: always
   PRODUCT_SLUG: cszip
-  API_BASE_URL: https://20f08p2m-3001.brs.devtunnels.ms
+  API_BASE_URL: https://api.convertsystems.site
   R2_PREFIX: releases/${{ github.ref_name }}
 
 permissions:
@@ -25,26 +25,35 @@ jobs:
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            package_name: cszip-${{ github.ref_name }}-linux-x86_64.tar.gz
+            ext: tar.gz
+            suffix: linux-x86_64
 
           - os: ubuntu-latest
             target: x86_64-unknown-linux-musl
-            package_name: cszip-${{ github.ref_name }}-linux-x86_64-musl.tar.gz
+            ext: tar.gz
+            suffix: linux-x86_64-musl
 
           - os: macos-latest
             target: x86_64-apple-darwin
-            package_name: cszip-${{ github.ref_name }}-macos-x86_64.tar.gz
+            ext: tar.gz
+            suffix: macos-x86_64
 
           - os: macos-latest
             target: aarch64-apple-darwin
-            package_name: cszip-${{ github.ref_name }}-macos-aarch64.tar.gz
+            ext: tar.gz
+            suffix: macos-aarch64
 
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            package_name: cszip-${{ github.ref_name }}-windows-x86_64.zip
+            ext: zip
+            suffix: windows-x86_64
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Normalize version
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -76,13 +85,19 @@ jobs:
 
       - name: Create archive
         shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.VERSION }}
+          SUFFIX: ${{ matrix.suffix }}
+          EXT: ${{ matrix.ext }}
         run: |
+          PACKAGE_NAME="cszip-${VERSION}-${SUFFIX}.${EXT}"
           cd dist
-          if [[ "${{ matrix.package_name }}" == *.zip ]]; then
-            7z a "../${{ matrix.package_name }}" *
+          if [[ "$EXT" == "zip" ]]; then
+            7z a "../${PACKAGE_NAME}" *
           else
-            tar -czf "../${{ matrix.package_name }}" *
+            tar -czf "../${PACKAGE_NAME}" *
           fi
+          echo "PACKAGE_NAME=${PACKAGE_NAME}" >> $GITHUB_ENV
 
       - name: Upload to R2
         shell: bash
@@ -92,21 +107,21 @@ jobs:
           AWS_DEFAULT_REGION: auto
         run: |
           python -m pip install awscli
-          aws s3 cp "${{ matrix.package_name }}" \
-            "s3://${{ secrets.R2_BUCKET_NAME }}/${{ env.R2_PREFIX }}/${{ matrix.package_name }}" \
+          aws s3 cp "${PACKAGE_NAME}" \
+            "s3://${{ secrets.R2_BUCKET_NAME }}/${{ env.R2_PREFIX }}/${PACKAGE_NAME}" \
             --endpoint-url "https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com" \
-            --content-disposition "attachment; filename=${{ matrix.package_name }}"
+            --content-disposition "attachment; filename=${PACKAGE_NAME}"
 
       - name: Generate metadata
         shell: bash
         run: |
           mkdir -p release-meta
-          SHA256=$(python3 -c "import hashlib; print(hashlib.sha256(open('${{ matrix.package_name }}','rb').read()).hexdigest())")
-          SIZE_BYTES=$(python3 -c "import os; print(os.path.getsize('${{ matrix.package_name }}'))")
-          cat > "release-meta/${{ matrix.package_name }}.json" <<EOF
+          SHA256=$(python3 -c "import hashlib; print(hashlib.sha256(open('${PACKAGE_NAME}','rb').read()).hexdigest())")
+          SIZE_BYTES=$(python3 -c "import os; print(os.path.getsize('${PACKAGE_NAME}'))")
+          cat > "release-meta/${PACKAGE_NAME}.json" <<EOF
           {
-            "fileKey": "${{ env.R2_PREFIX }}/${{ matrix.package_name }}",
-            "fileName": "${{ matrix.package_name }}",
+            "fileKey": "${{ env.R2_PREFIX }}/${PACKAGE_NAME}",
+            "fileName": "${PACKAGE_NAME}",
             "sizeBytes": $SIZE_BYTES,
             "sha256": "$SHA256",
             "contentType": "application/octet-stream"
