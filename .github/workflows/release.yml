@@ -8,12 +8,14 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  PRODUCT_SLUG: cszip
+  API_BASE_URL: https://20f08p2m-3001.brs.devtunnels.ms
+  R2_PREFIX: releases/${{ github.ref_name }}
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  # Job 1: Compilar binarios para todas las plataformas
   build:
     name: Build ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
@@ -21,35 +23,25 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Linux x86_64
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            artifact_name: cszip
-            asset_name: cszip-linux-x86_64
+            package_name: cszip-${{ github.ref_name }}-linux-x86_64.tar.gz
 
-          # Linux x86_64 musl (estático)
           - os: ubuntu-latest
             target: x86_64-unknown-linux-musl
-            artifact_name: cszip
-            asset_name: cszip-linux-x86_64-musl
+            package_name: cszip-${{ github.ref_name }}-linux-x86_64-musl.tar.gz
 
-          # macOS Intel
           - os: macos-latest
             target: x86_64-apple-darwin
-            artifact_name: cszip
-            asset_name: cszip-macos-x86_64
+            package_name: cszip-${{ github.ref_name }}-macos-x86_64.tar.gz
 
-          # macOS Apple Silicon
           - os: macos-latest
             target: aarch64-apple-darwin
-            artifact_name: cszip
-            asset_name: cszip-macos-aarch64
+            package_name: cszip-${{ github.ref_name }}-macos-aarch64.tar.gz
 
-          # Windows x86_64
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            artifact_name: cszip.exe
-            asset_name: cszip-windows-x86_64
+            package_name: cszip-${{ github.ref_name }}-windows-x86_64.zip
 
     steps:
       - uses: actions/checkout@v4
@@ -70,151 +62,128 @@ jobs:
         if: matrix.target != 'aarch64-apple-darwin'
         run: cargo test --release --target ${{ matrix.target }}
 
-      - name: Create package directory
-        shell: bash
-        run: mkdir -p package
-
-      - name: Copy binary (Unix)
-        if: runner.os != 'Windows'
-        run: cp target/${{ matrix.target }}/release/${{ matrix.artifact_name }} package/
-
-      - name: Copy binary (Windows)
-        if: runner.os == 'Windows'
-        run: Copy-Item target/${{ matrix.target }}/release/${{ matrix.artifact_name }} package/
-
-      - name: Copy documentation
+      - name: Prepare package
         shell: bash
         run: |
-          cp README.md package/
-          cp LICENSE package/
-
-      - name: Create tarball (Unix)
-        if: runner.os != 'Windows'
-        run: |
-          cd package
-          tar -czvf ../${{ matrix.asset_name }}.tar.gz *
-
-      - name: Create zip (Windows)
-        if: runner.os == 'Windows'
-        run: Compress-Archive -Path package/* -DestinationPath ${{ matrix.asset_name }}.zip
-
-      - name: Upload artifact (Unix)
-        if: runner.os != 'Windows'
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.asset_name }}
-          path: ${{ matrix.asset_name }}.tar.gz
-
-      - name: Upload artifact (Windows)
-        if: runner.os == 'Windows'
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.asset_name }}
-          path: ${{ matrix.asset_name }}.zip
-
-  # Job 2: Crear release en GitHub con todos los binarios
-  release:
-    name: Create GitHub Release
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-
-      - name: Prepare release files
-        run: |
-          mkdir -p release
-          find artifacts -type f \( -name "*.tar.gz" -o -name "*.zip" \) -exec cp {} release/ \;
-          echo "Release files:"
-          ls -la release/
-
-      - name: Generate checksums
-        run: |
-          cd release
-          sha256sum * > checksums.sha256
-          cat checksums.sha256
-
-      - name: Get version from tag
-        id: version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-
-      - name: Check if prerelease
-        id: prerelease
-        run: |
-          if [[ "${{ steps.version.outputs.VERSION }}" == *"-"* ]]; then
-            echo "IS_PRERELEASE=true" >> $GITHUB_OUTPUT
+          mkdir -p dist
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            cp "target/${{ matrix.target }}/release/cszip.exe" dist/
           else
-            echo "IS_PRERELEASE=false" >> $GITHUB_OUTPUT
+            cp "target/${{ matrix.target }}/release/cszip" dist/
+          fi
+          cp README.md dist/
+          cp LICENSE dist/
+
+      - name: Create archive
+        shell: bash
+        run: |
+          cd dist
+          if [[ "${{ matrix.package_name }}" == *.zip ]]; then
+            7z a "../${{ matrix.package_name }}" *
+          else
+            tar -czf "../${{ matrix.package_name }}" *
           fi
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          name: CsZip ${{ steps.version.outputs.VERSION }}
-          draft: false
-          prerelease: ${{ steps.prerelease.outputs.IS_PRERELEASE }}
-          generate_release_notes: true
-          files: release/*
-          body: |
-            ## 📦 CsZip ${{ steps.version.outputs.VERSION }}
-            
-            ### 📥 Descargas
-            
-            | Plataforma | Arquitectura | Archivo | Notas |
-            |------------|--------------|---------|-------|
-            | **Linux** | x86_64 | `cszip-linux-x86_64.tar.gz` | Requiere glibc 2.17+ |
-            | **Linux** | x86_64 | `cszip-linux-x86_64-musl.tar.gz` | Binario estático, portable |
-            | **macOS** | Intel | `cszip-macos-x86_64.tar.gz` | macOS 10.12+ |
-            | **macOS** | Apple Silicon | `cszip-macos-aarch64.tar.gz` | macOS 11.0+ (M1/M2/M3) |
-            | **Windows** | x86_64 | `cszip-windows-x86_64.zip` | Windows 10+ |
-            
-            ### 🔐 Verificar Integridad
-            
-            ```bash
-            # Descargar checksums
-            curl -LO https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.VERSION }}/checksums.sha256
-            
-            # Verificar
-            sha256sum -c checksums.sha256
-            ```
-            
-            ### 🚀 Instalación Rápida
-            
-            **Linux/macOS:**
-            ```bash
-            # Descargar y extraer (ajustar nombre según tu sistema)
-            curl -LO https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.VERSION }}/cszip-linux-x86_64.tar.gz
-            tar -xzf cszip-linux-x86_64.tar.gz
-            sudo mv cszip /usr/local/bin/
-            cszip --version
-            ```
-            
-            **Windows (PowerShell):**
-            ```powershell
-            Invoke-WebRequest -Uri "https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.VERSION }}/cszip-windows-x86_64.zip" -OutFile cszip.zip
-            Expand-Archive cszip.zip -DestinationPath C:\cszip
-            # Añadir C:\cszip al PATH del sistema
-            ```
-            
-            ### 📚 Documentación
-            
-            - [Guía de Instalación](docs/INSTALL.md)
-            - [Manual de Uso](docs/USAGE.md)
-            - [Formato .cz](FORMAT.md)
+      - name: Upload to R2
+        shell: bash
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+        run: |
+          python -m pip install awscli
+          aws s3 cp "${{ matrix.package_name }}" \
+            "s3://${{ secrets.R2_BUCKET_NAME }}/${{ env.R2_PREFIX }}/${{ matrix.package_name }}" \
+            --endpoint-url "https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com" \
+            --content-disposition "attachment; filename=${{ matrix.package_name }}"
 
-  # Job 3: Publicar en crates.io (opcional)
+      - name: Generate metadata
+        shell: bash
+        run: |
+          mkdir -p release-meta
+          SHA256=$(python3 -c "import hashlib; print(hashlib.sha256(open('${{ matrix.package_name }}','rb').read()).hexdigest())")
+          SIZE_BYTES=$(python3 -c "import os; print(os.path.getsize('${{ matrix.package_name }}'))")
+          cat > "release-meta/${{ matrix.package_name }}.json" <<EOF
+          {
+            "fileKey": "${{ env.R2_PREFIX }}/${{ matrix.package_name }}",
+            "fileName": "${{ matrix.package_name }}",
+            "sizeBytes": $SIZE_BYTES,
+            "sha256": "$SHA256",
+            "contentType": "application/octet-stream"
+          }
+          EOF
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: meta-${{ matrix.target }}
+          path: release-meta/*.json
+          retention-days: 1
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: meta-*
+          path: release-meta
+          merge-multiple: true
+
+      - name: Build manifest
+        shell: bash
+        run: |
+          sudo apt-get update && sudo apt-get install -y jq
+
+          VERSION="${{ github.ref_name }}"
+          NORMALIZED_VERSION="${VERSION#v}"
+          CHANNEL="stable"
+          if [[ "$NORMALIZED_VERSION" == *"-alpha."* ]]; then CHANNEL="alpha"; fi
+          if [[ "$NORMALIZED_VERSION" == *"-beta."* ]]; then CHANNEL="beta"; fi
+          if [[ "$NORMALIZED_VERSION" == *"-rc."* ]]; then CHANNEL="rc"; fi
+
+          jq -s \
+            --arg version "$VERSION" \
+            --arg channel "$CHANNEL" \
+            --arg repository "${{ github.repository }}" \
+            --arg tag "${{ github.ref_name }}" \
+            --arg commit "${{ github.sha }}" \
+            --arg workflowRunId "${{ github.run_id }}" \
+            '{
+              version: $version,
+              channel: $channel,
+              changelog: "Release generated automatically from GitHub Actions.",
+              source: {
+                provider: "github",
+                repository: $repository,
+                tag: $tag,
+                commit: $commit,
+                workflowRunId: $workflowRunId
+              },
+              artifacts: .
+            }' release-meta/*.json > manifest.json
+
+          echo "Manifest:"
+          cat manifest.json
+
+      - name: Notify ConvertSystems
+        shell: bash
+        run: |
+          curl -X POST "${{ env.API_BASE_URL }}/api/v1/products/${{ env.PRODUCT_SLUG }}/github-upload-callback" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.CONVERTSYSTEMS_GITHUB_UPLOAD_TOKEN }}" \
+            -H "X-GitHub-Repository: ${{ github.repository }}" \
+            -H "X-GitHub-Tag: ${{ github.ref_name }}" \
+            -H "X-GitHub-Commit: ${{ github.sha }}" \
+            --data-binary "@manifest.json" \
+            --fail
+
   publish-crates:
     name: Publish to crates.io
-    needs: release
+    needs: build
     runs-on: ubuntu-latest
-    # Solo publicar releases estables (sin guiones en la versión)
     if: ${{ !contains(github.ref, '-') }}
+
     steps:
       - uses: actions/checkout@v4
 
