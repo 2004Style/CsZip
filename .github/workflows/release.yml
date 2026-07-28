@@ -9,7 +9,6 @@ on:
 env:
   CARGO_TERM_COLOR: always
   PRODUCT_SLUG: cszip
-  API_BASE_URL: https://20f08p2m-3001.brs.devtunnels.ms
   R2_PREFIX: releases/${{ github.ref_name }}
 
 permissions:
@@ -179,8 +178,10 @@ jobs:
 
       - name: Notify ConvertSystems
         shell: bash
+        env:
+          API_BASE_URL: ${{ secrets.CONVERTSYSTEMS_API_URL }}
         run: |
-          curl -X POST "${{ env.API_BASE_URL }}/api/v1/products/${{ env.PRODUCT_SLUG }}/github-upload-callback" \
+          curl -X POST "${API_BASE_URL}/api/v1/products/${{ env.PRODUCT_SLUG }}/github-upload-callback" \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer ${{ secrets.CONVERTSYSTEMS_GITHUB_UPLOAD_TOKEN }}" \
             -H "X-GitHub-Repository: ${{ github.repository }}" \
