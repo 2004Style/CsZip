@@ -55,6 +55,9 @@ jobs:
         with:
           targets: ${{ matrix.target }}
 
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
       - name: Install musl-tools (Linux musl)
         if: matrix.target == 'x86_64-unknown-linux-musl'
         run: sudo apt-get update && sudo apt-get install -y musl-tools
@@ -190,27 +193,3 @@ jobs:
             --data-binary "@manifest.json" \
             --fail
 
-  publish-crates:
-    name: Publish to crates.io
-    needs: build
-    runs-on: ubuntu-latest
-    if: ${{ !contains(github.ref, '-') }}
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Verify version matches tag
-        run: |
-          VERSION=$(grep '^version' Cargo.toml | head -1 | cut -d'"' -f2)
-          TAG=${GITHUB_REF#refs/tags/v}
-          if [ "$VERSION" != "$TAG" ]; then
-            echo "Version mismatch: Cargo.toml has $VERSION but tag is $TAG"
-            exit 1
-          fi
-
-      - name: Publish to crates.io
-        run: cargo publish --token ${{ secrets.CRATES_TOKEN }}
-        continue-on-error: true
