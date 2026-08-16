@@ -1,0 +1,2398 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CsZip — Documentación</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Playfair+Display:ital,wght@0,700;1,700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+    <style>
+      :root {
+        --bg-primary: #0b100b;
+        --bg-secondary: #121a12;
+        --bg-tertiary: #1a2a1a;
+        --bg-card: #162216;
+        --bg-hover: #1e301e;
+        --border: #2a3f2a;
+        --border-light: #3a553a;
+        --text-primary: #f1f5f1;
+        --text-secondary: #94a894;
+        --text-muted: #647864;
+        --accent: #22d36e;
+        --accent2: #06b44e;
+        --accent3: #156e3a;
+        --accent-glow: rgba(34, 211, 110, 0.12);
+        --accent-glow-sm: rgba(34, 211, 110, 0.06);
+        --rose: #fb7185;
+        --rose-glow: rgba(251, 113, 133, 0.12);
+        --green: #34d399;
+        --green-glow: rgba(52, 211, 153, 0.12);
+        --violet: #a78bfa;
+        --violet-glow: rgba(167, 139, 250, 0.12);
+        --cyan: #22d3ee;
+        --gradient-1: linear-gradient(135deg, #22d36e, #a78bfa);
+        --gradient-2: linear-gradient(135deg, #06b44e, #22d36e);
+        --gradient-3: linear-gradient(135deg, #22d36e, #34d399);
+        --gradient-hero: linear-gradient(
+          135deg,
+          #22d36e 0%,
+          #a78bfa 50%,
+          #fb7185 100%
+        );
+        --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+        --shadow-glow: 0 4px 20px rgba(34, 211, 110, 0.15);
+      }
+
+      [data-theme="light"] {
+        --bg-primary: #f8faf8;
+        --bg-secondary: #f1f5f1;
+        --bg-tertiary: #e2e8e2;
+        --bg-card: #ffffff;
+        --bg-hover: #cbd5cb;
+        --border: #cbd5cb;
+        --border-light: #94a894;
+        --text-primary: #0f2a0f;
+        --text-secondary: #476447;
+        --text-muted: #94a894;
+        --accent: #08914e;
+        --accent2: #06b44e;
+        --accent3: #165e3a;
+        --accent-glow: rgba(8, 145, 78, 0.08);
+        --accent-glow-sm: rgba(8, 145, 78, 0.04);
+        --rose: #e11d48;
+        --rose-glow: rgba(225, 29, 72, 0.08);
+        --green: #65a30d;
+        --green-glow: rgba(101, 163, 13, 0.08);
+        --violet: #7c3aed;
+        --violet-glow: rgba(124, 58, 237, 0.08);
+        --cyan: #0891b2;
+        --shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+        --shadow-glow: 0 4px 20px rgba(8, 145, 78, 0.1);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        transition:
+          background 0.3s ease,
+          color 0.3s ease;
+        overflow-x: hidden;
+      }
+
+      ::selection {
+        background: var(--accent-glow);
+        color: var(--accent2);
+      }
+
+      ::-webkit-scrollbar {
+        width: 5px;
+        height: 5px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 3px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--text-muted);
+      }
+
+      code,
+      pre {
+        font-family: "JetBrains Mono", monospace !important;
+      }
+
+      pre {
+        background: var(--bg-secondary) !important;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.25rem 1.5rem;
+        overflow-x: auto;
+        font-size: 0.8125rem;
+        line-height: 1.65;
+        position: relative;
+      }
+
+      pre code {
+        background: transparent !important;
+        padding: 0 !important;
+      }
+
+      code {
+        background: var(--accent-glow);
+        color: var(--accent2);
+        padding: 0.15em 0.4em;
+        border-radius: 4px;
+        font-size: 0.875em;
+      }
+
+      .copy-btn {
+        position: absolute;
+        top: 0.65rem;
+        right: 0.65rem;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border);
+        color: var(--text-secondary);
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        opacity: 0;
+      }
+
+      pre:hover .copy-btn {
+        opacity: 1;
+      }
+
+      .copy-btn:hover {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+      }
+
+      .copy-btn.copied {
+        color: var(--green);
+        border-color: var(--green);
+      }
+
+      .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 280px;
+        height: 100vh;
+        background: var(--bg-secondary);
+        border-right: 1px solid var(--border);
+        overflow-y: auto;
+        z-index: 50;
+        transition:
+          transform 0.3s ease,
+          background 0.3s ease;
+      }
+
+      .sidebar-logo {
+        padding: 1.5rem 1.25rem;
+        border-bottom: 1px solid var(--border);
+        background: linear-gradient(
+          180deg,
+          var(--bg-tertiary) 0%,
+          transparent 100%
+        );
+      }
+
+      .sidebar-nav {
+        padding: 0.75rem 0;
+      }
+
+      .sidebar-section {
+        margin-bottom: 0.25rem;
+      }
+
+      .sidebar-section-title {
+        padding: 0.5rem 1.25rem 0.4rem;
+        font-size: 0.6875rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-muted);
+      }
+
+      .sidebar-link {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.5rem 1.25rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: all 0.15s ease;
+        border-left: 2px solid transparent;
+        position: relative;
+      }
+
+      .sidebar-link:hover {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+      }
+
+      .sidebar-link.active {
+        color: var(--accent2);
+        border-left-color: var(--accent);
+        background: var(--accent-glow-sm);
+      }
+
+      .sidebar-link i {
+        width: 16px;
+        font-size: 0.875rem;
+      }
+
+      .main-content {
+        margin-left: 280px;
+        min-height: 100vh;
+      }
+
+      .hero {
+        padding: 5rem 3rem 3rem;
+        background: linear-gradient(
+          180deg,
+          var(--bg-tertiary) 0%,
+          transparent 100%
+        );
+        border-bottom: 1px solid var(--border);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .hero::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(
+          circle,
+          var(--accent-glow) 0%,
+          transparent 70%
+        );
+        pointer-events: none;
+      }
+
+      .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.25rem 0.75rem;
+        background: var(--accent-glow-sm);
+        border: 1px solid rgba(34, 211, 110, 0.15);
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--accent2);
+        margin-bottom: 1.25rem;
+        backdrop-filter: blur(4px);
+      }
+
+      .hero h1 {
+        font-size: 3.25rem;
+        font-weight: 900;
+        line-height: 1.1;
+        letter-spacing: -0.04em;
+        margin-bottom: 1rem;
+      }
+
+      .hero .gradient-text {
+        background: var(--gradient-hero);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .hero p {
+        font-size: 1.15rem;
+        color: var(--text-secondary);
+        max-width: 600px;
+        line-height: 1.75;
+      }
+
+      .hero-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        border: none;
+      }
+
+      .btn-primary {
+        background: var(--gradient-1);
+        color: #0b100b;
+        box-shadow: var(--shadow-glow);
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(34, 211, 110, 0.25);
+      }
+
+      .btn-secondary {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border: 1px solid var(--border);
+      }
+
+      .btn-secondary:hover {
+        background: var(--bg-hover);
+        border-color: var(--border-light);
+      }
+
+      .content {
+        padding: 3rem;
+      }
+
+      .section {
+        margin-bottom: 4rem;
+      }
+
+      .section-heading {
+        font-size: 1.75rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .section-heading .icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: var(--accent-glow);
+        color: var(--accent2);
+        font-size: 0.875rem;
+      }
+
+      .section-subtitle {
+        color: var(--text-secondary);
+        font-size: 1rem;
+        margin-bottom: 1.5rem;
+        line-height: 1.6;
+      }
+
+      .card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        transition: all 0.2s ease;
+      }
+
+      .card:hover {
+        border-color: var(--border-light);
+      }
+
+      .card h4 {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .card p {
+        color: var(--text-secondary);
+        font-size: 0.9375rem;
+        line-height: 1.7;
+      }
+
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+      }
+
+      .grid-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 1rem;
+      }
+
+      .feature-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 1.5rem;
+        transition: all 0.25s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .feature-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--gradient-1);
+        opacity: 0;
+        transition: opacity 0.25s ease;
+      }
+
+      .feature-card:hover::before {
+        opacity: 1;
+      }
+
+      .feature-card:hover {
+        transform: translateY(-3px);
+        border-color: var(--border-light);
+        box-shadow: var(--shadow);
+      }
+
+      .feature-card .f-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+      }
+
+      .feature-card h4 {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+      }
+
+      .feature-card p {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        line-height: 1.6;
+      }
+
+      .cmd-block {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 0.9rem 1.25rem;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin-bottom: 0.75rem;
+      }
+
+      .cmd-block:hover {
+        border-color: var(--accent);
+        background: var(--bg-tertiary);
+      }
+
+      .cmd-block .prompt {
+        color: var(--green);
+        font-weight: 600;
+      }
+
+      .cmd-block .cmd {
+        color: var(--text-primary);
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.875rem;
+      }
+
+      thead {
+        background: var(--bg-secondary);
+      }
+
+      th {
+        text-align: left;
+        padding: 0.85rem 1.25rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 1px solid var(--border);
+      }
+
+      td {
+        padding: 0.85rem 1.25rem;
+        border-bottom: 1px solid var(--border);
+        color: var(--text-secondary);
+      }
+
+      tr:last-child td {
+        border-bottom: none;
+      }
+
+      tr:hover td {
+        background: var(--bg-tertiary);
+      }
+
+      td code {
+        font-size: 0.8125rem;
+      }
+
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.15rem 0.55rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+      }
+
+      .tag-cyan {
+        background: var(--accent-glow);
+        color: var(--accent2);
+      }
+
+      .tag-green {
+        background: var(--green-glow);
+        color: var(--green);
+      }
+
+      .tag-rose {
+        background: var(--rose-glow);
+        color: var(--rose);
+      }
+
+      .tag-violet {
+        background: var(--violet-glow);
+        color: var(--violet);
+      }
+
+      .theme-toggle {
+        position: fixed;
+        bottom: 1.5rem;
+        right: 1.5rem;
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 100;
+        box-shadow: var(--shadow);
+        transition: all 0.2s ease;
+        font-size: 1.25rem;
+      }
+
+      .theme-toggle:hover {
+        border-color: var(--accent2);
+        transform: scale(1.1) rotate(15deg);
+      }
+
+      .mobile-menu-btn {
+        display: none;
+        position: fixed;
+        top: 0.75rem;
+        left: 0.75rem;
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        color: var(--text-primary);
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 60;
+        font-size: 1.1rem;
+      }
+
+      .toast {
+        position: fixed;
+        bottom: 5rem;
+        right: 1.5rem;
+        background: var(--bg-card);
+        border: 1px solid var(--green);
+        color: var(--green);
+        padding: 0.6rem 1.2rem;
+        border-radius: 10px;
+        font-size: 0.8125rem;
+        font-weight: 500;
+        box-shadow: var(--shadow);
+        opacity: 0;
+        transform: translateY(10px);
+        transition: all 0.3s ease;
+        pointer-events: none;
+        z-index: 200;
+      }
+
+      .toast.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .prose h3 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin: 1.5rem 0 0.75rem;
+        color: var(--text-primary);
+      }
+
+      .prose h4 {
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 1.25rem 0 0.5rem;
+      }
+
+      .prose p {
+        color: var(--text-secondary);
+        line-height: 1.75;
+        margin-bottom: 1rem;
+      }
+
+      .prose ul,
+      .prose ol {
+        color: var(--text-secondary);
+        line-height: 1.75;
+        padding-left: 1.25rem;
+        margin-bottom: 1rem;
+      }
+
+      .prose li {
+        margin-bottom: 0.25rem;
+      }
+
+      .prose li strong {
+        color: var(--text-primary);
+      }
+
+      .audience-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .audience-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.25s ease;
+      }
+
+      .audience-card:hover {
+        transform: translateY(-3px);
+        border-color: var(--border-light);
+        box-shadow: var(--shadow);
+      }
+
+      .audience-card .a-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        font-size: 1.3rem;
+      }
+
+      .audience-card h4 {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 0.35rem;
+      }
+
+      .audience-card p {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        line-height: 1.5;
+      }
+
+      .stat-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+        margin: 2rem 0;
+      }
+
+      .stat-box {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 1.5rem 1rem;
+        text-align: center;
+      }
+
+      .stat-box .num {
+        font-size: 2rem;
+        font-weight: 800;
+        background: var(--gradient-1);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .stat-box .label {
+        font-size: 0.8125rem;
+        color: var(--text-muted);
+        margin-top: 0.25rem;
+        font-weight: 500;
+      }
+
+      .showcase {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .showcase-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 1.5rem;
+        position: relative;
+      }
+
+      .showcase-card .sc-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+      }
+
+      .showcase-card .sc-header .sc-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+      }
+
+      .showcase-card pre {
+        margin: 0;
+        padding: 1rem;
+        font-size: 0.8125rem;
+        background: var(--bg-primary) !important;
+      }
+
+      .env-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .env-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.25rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.875rem;
+        transition: all 0.2s ease;
+      }
+
+      .env-card:hover {
+        border-color: var(--border-light);
+      }
+
+      .env-card .e-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        flex-shrink: 0;
+      }
+
+      .env-card h5 {
+        font-size: 0.9375rem;
+        font-weight: 600;
+        margin-bottom: 0.2rem;
+      }
+
+      .env-card p {
+        font-size: 0.8125rem;
+        color: var(--text-secondary);
+        line-height: 1.5;
+      }
+
+      .format-diagram {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1.5rem;
+      }
+
+      .format-box {
+        background: var(--bg-card);
+        border: 2px solid var(--border);
+        border-radius: 10px;
+        padding: 0.75rem 1.5rem;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.8125rem;
+        font-weight: 500;
+        text-align: center;
+        min-width: 280px;
+        transition: all 0.2s ease;
+      }
+
+      .format-box:hover {
+        border-color: var(--accent);
+        box-shadow: 0 0 16px var(--accent-glow);
+      }
+
+      .format-box.accent {
+        border-color: var(--accent2);
+        background: var(--accent-glow-sm);
+      }
+
+      .format-box.rose {
+        border-color: var(--rose);
+        background: var(--rose-glow);
+      }
+
+      .format-arrow {
+        color: var(--text-muted);
+        font-size: 1rem;
+      }
+
+      .format-row {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .format-row .format-box {
+        min-width: 160px;
+      }
+
+      @media (max-width: 1024px) {
+        .sidebar {
+          transform: translateX(-100%);
+        }
+
+        .sidebar.open {
+          transform: translateX(0);
+        }
+
+        .main-content {
+          margin-left: 0;
+        }
+
+        .mobile-menu-btn {
+          display: flex;
+        }
+
+        .hero {
+          padding: 4rem 1.5rem 2rem;
+        }
+
+        .hero h1 {
+          font-size: 2.25rem;
+        }
+
+        .content {
+          padding: 2rem 1.5rem;
+        }
+
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+
+        .stat-row {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .showcase {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .hero {
+          padding: 3.5rem 1rem 2rem;
+        }
+
+        .hero h1 {
+          font-size: 1.75rem;
+        }
+
+        .content {
+          padding: 1.5rem 1rem;
+        }
+
+        .section-heading {
+          font-size: 1.35rem;
+        }
+
+        .stat-row {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      .anim-fade-in {
+        opacity: 0;
+        transform: translateY(20px);
+        transition:
+          opacity 0.6s ease,
+          transform 0.6s ease;
+      }
+
+      .anim-fade-in.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .glow-pulse {
+        animation: glowPulse 2.5s ease-in-out infinite;
+      }
+
+      @keyframes glowPulse {
+        0%,
+        100% {
+          box-shadow: 0 0 8px var(--accent-glow);
+        }
+
+        50% {
+          box-shadow:
+            0 0 24px var(--accent-glow),
+            0 0 48px var(--accent-glow-sm);
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Menú">
+      <i class="fas fa-bars"></i>
+    </button>
+
+    <button class="theme-toggle" id="themeToggle" aria-label="Tema">
+      <i class="fas fa-moon" id="themeIcon"></i>
+    </button>
+
+    <div class="toast" id="toast">
+      <i class="fas fa-check-circle"></i>&nbsp; Copiado
+    </div>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <div style="display: flex; align-items: center; gap: 0.75rem">
+          <div
+            style="
+              width: 36px;
+              height: 36px;
+              border-radius: 10px;
+              background: var(--gradient-1);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-weight: 800;
+              font-size: 1rem;
+              color: #0b100b;
+            "
+          >
+            C
+          </div>
+          <div>
+            <div
+              style="font-weight: 700; font-size: 1rem; letter-spacing: -0.02em"
+            >
+              CsZip
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-muted)">
+              Documentación
+            </div>
+          </div>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Empezar</div>
+          <a class="sidebar-link active" href="#intro"
+            ><i class="fas fa-rocket"></i> Introducción</a
+          >
+          <a class="sidebar-link" href="#para-quien"
+            ><i class="fas fa-users"></i> ¿Para quién?</a
+          >
+          <a class="sidebar-link" href="#instalacion"
+            ><i class="fas fa-download"></i> Instalación</a
+          >
+          <a class="sidebar-link" href="#primeros-pasos"
+            ><i class="fas fa-play"></i> Primeros Pasos</a
+          >
+        </div>
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Características</div>
+          <a class="sidebar-link" href="#features"
+            ><i class="fas fa-list-check"></i> Funcionalidades</a
+          >
+          <a class="sidebar-link" href="#comandos"
+            ><i class="fas fa-terminal"></i> Comandos</a
+          >
+          <a class="sidebar-link" href="#formato"
+            ><i class="fas fa-cube"></i> Formato .cz</a
+          >
+        </div>
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Referencia</div>
+          <a class="sidebar-link" href="#config"
+            ><i class="fas fa-cog"></i> Configuración</a
+          >
+          <a class="sidebar-link" href="#env-vars"
+            ><i class="fas fa-tag"></i> Variables de Entorno</a
+          >
+          <a class="sidebar-link" href="#faq"
+            ><i class="fas fa-question-circle"></i> FAQ</a
+          >
+        </div>
+      </nav>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+      <!-- HERO -->
+      <section class="hero anim-fade-in visible" id="intro">
+        <h1>
+          Compresión sin pérdida,<br />
+          <span class="gradient-text">desde la terminal</span>
+        </h1>
+        <p>
+          CsZip es un compresor de archivos rápido, seguro y altamente portable
+          escrito en Rust. Usa formato propio .cz (LZ77+Huffman) y soporta ZIP
+          nativo y extracción RAR.
+        </p>
+        <div class="hero-actions">
+          <a href="#instalacion" class="btn btn-primary">
+            <i class="fas fa-download"></i> Instalar ahora
+          </a>
+          <a href="#primeros-pasos" class="btn btn-secondary">
+            <i class="fas fa-play"></i> Primeros pasos
+          </a>
+          <a
+            href="https://github.com/user/CsZip"
+            target="_blank"
+            class="btn btn-secondary"
+          >
+            <i class="fab fa-github"></i> GitHub
+          </a>
+        </div>
+
+        <div class="stat-row">
+          <div class="stat-box">
+            <div class="num">3</div>
+            <div class="label">Formatos soportados</div>
+          </div>
+          <div class="stat-box">
+            <div class="num">330+</div>
+            <div class="label">Tests</div>
+          </div>
+          <div class="stat-box">
+            <div class="num">3</div>
+            <div class="label">Checksums por archivo</div>
+          </div>
+          <div class="stat-box">
+            <div class="num">1</div>
+            <div class="label">Comando para empezar</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CONTENT -->
+      <div class="content">
+        <!-- ===================== PARA QUIEN ===================== -->
+        <section class="section anim-fade-in" id="para-quien">
+          <h2 class="section-heading">
+            <span class="icon"><i class="fas fa-users"></i></span>
+            ¿Para quién es CsZip?
+          </h2>
+          <p class="section-subtitle">
+            Diseñado para quienes necesitan comprimir y verificar archivos sin
+            dependencias pesadas ni GUIs.
+          </p>
+
+          <div class="audience-grid">
+            <div class="audience-card">
+              <div
+                class="a-icon"
+                style="background: var(--accent-glow); color: var(--accent2)"
+              >
+                <i class="fas fa-laptop-code"></i>
+              </div>
+              <h4>Desarrolladores</h4>
+              <p>
+                Comprime y verifica artefactos de build, backups de DB o logs
+                directamente desde el pipeline.
+              </p>
+            </div>
+            <div class="audience-card">
+              <div
+                class="a-icon"
+                style="background: var(--rose-glow); color: var(--rose)"
+              >
+                <i class="fas fa-server"></i>
+              </div>
+              <h4>DevOps / Sysadmins</h4>
+              <p>
+                Automatiza backups con verificación de integridad. Ideal para
+                scripts en servidores headless vía SSH.
+              </p>
+            </div>
+            <div class="audience-card">
+              <div
+                class="a-icon"
+                style="background: var(--green-glow); color: var(--green)"
+              >
+                <i class="fas fa-flask"></i>
+              </div>
+              <h4>Científicos de datos</h4>
+              <p>
+                Comprime datasets enormes con memoria constante gracias al
+                procesamiento streaming por bloques.
+              </p>
+            </div>
+            <div class="audience-card">
+              <div
+                class="a-icon"
+                style="background: var(--violet-glow); color: var(--violet)"
+              >
+                <i class="fas fa-graduation-cap"></i>
+              </div>
+              <h4>Entusiastas de Rust</h4>
+              <p>
+                Proyecto open source modular con LZ77+Huffman implementado desde
+                cero. Ideal para aprender y contribuir.
+              </p>
+            </div>
+          </div>
+
+          <h3
+            style="
+              font-size: 1.15rem;
+              font-weight: 700;
+              margin-top: 2rem;
+              margin-bottom: 1rem;
+            "
+          >
+            Dónde sacarle más provecho
+          </h3>
+          <div class="env-grid">
+            <div class="env-card">
+              <div
+                class="e-icon"
+                style="background: var(--accent-glow); color: var(--accent2)"
+              >
+                <i class="fas fa-laptop"></i>
+              </div>
+              <div>
+                <h5>Desarrollo local</h5>
+                <p>
+                  Comprime artefactos de build, logs de debugging o backups
+                  rápidos sin salir de la terminal.
+                </p>
+              </div>
+            </div>
+            <div class="env-card">
+              <div
+                class="e-icon"
+                style="background: var(--rose-glow); color: var(--rose)"
+              >
+                <i class="fas fa-terminal"></i>
+              </div>
+              <div>
+                <h5>SSH remoto</h5>
+                <p>
+                  Servidores headless donde no hay GUI. CsZip funciona en
+                  cualquier terminal a través de SSH.
+                </p>
+              </div>
+            </div>
+            <div class="env-card">
+              <div
+                class="e-icon"
+                style="background: var(--green-glow); color: var(--green)"
+              >
+                <i class="fas fa-microchip"></i>
+              </div>
+              <div>
+                <h5>Homelab / Raspberry Pi</h5>
+                <p>
+                  Binario pequeño (~3 MB), consumo mínimo de RAM. Perfecto para
+                  ARM64 y entornos con recursos limitados.
+                </p>
+              </div>
+            </div>
+            <div class="env-card">
+              <div
+                class="e-icon"
+                style="background: var(--violet-glow); color: var(--violet)"
+              >
+                <i class="fas fa-code-branch"></i>
+              </div>
+              <div>
+                <h5>CI/CD pipelines</h5>
+                <p>
+                  Comprime artefactos, verifica integridad de archivos y
+                  descomprime dependencias en pipelines automatizados.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===================== INSTALACION ===================== -->
+        <section class="section anim-fade-in" id="instalacion">
+          <h2 class="section-heading">
+            <span class="icon"><i class="fas fa-download"></i></span>
+            Instalación
+          </h2>
+          <p class="section-subtitle">
+            Rust 1.70+ y Cargo. En un minuto estás comprimiendo.
+          </p>
+
+          <div
+            style="
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 1rem;
+              margin-bottom: 2rem;
+            "
+          >
+            <div class="card" style="margin: 0">
+              <h4><i class="fas fa-cubes"></i> Script automático</h4>
+              <div
+                class="cmd-block"
+                onclick="copyCmd(this)"
+                style="margin-top: 0.5rem"
+              >
+                <span class="prompt">$</span>
+                <span class="cmd"
+                  >curl -fsSL
+                  https://raw.githubusercontent.com/user/CsZip/main/install.sh |
+                  sh</span
+                >
+                <span
+                  style="
+                    margin-left: auto;
+                    color: var(--text-muted);
+                    font-size: 0.75rem;
+                  "
+                  ><i class="fas fa-copy"></i
+                ></span>
+              </div>
+            </div>
+            <div class="card" style="margin: 0">
+              <h4><i class="fas fa-play"></i> Compilar desde fuente</h4>
+              <div
+                class="cmd-block"
+                onclick="copyCmd(this)"
+                style="margin-top: 0.5rem"
+              >
+                <span class="prompt">$</span>
+                <span class="cmd"
+                  >git clone https://github.com/user/CsZip.git && cd CsZip &&
+                  cargo build --release</span
+                >
+                <span
+                  style="
+                    margin-left: auto;
+                    color: var(--text-muted);
+                    font-size: 0.75rem;
+                  "
+                  ><i class="fas fa-copy"></i
+                ></span>
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="card"
+            style="border-left: 3px solid var(--accent); margin-bottom: 1.5rem"
+          >
+            <h4 style="color: var(--accent2)">
+              <i class="fas fa-code-branch"></i> Windows (PowerShell)
+            </h4>
+            <div
+              class="cmd-block"
+              onclick="copyCmd(this)"
+              style="margin-top: 0.5rem"
+            >
+              <span class="prompt">PS></span>
+              <span class="cmd"
+                >powershell -ExecutionPolicy Bypass -Command "Invoke-Expression
+                (Invoke-WebRequest -Uri
+                'https://raw.githubusercontent.com/user/CsZip/main/install.ps1'
+                -UseBasicParsing).Content"</span
+              >
+              <span
+                style="
+                  margin-left: auto;
+                  color: var(--text-muted);
+                  font-size: 0.75rem;
+                "
+                ><i class="fas fa-copy"></i
+              ></span>
+            </div>
+          </div>
+
+          <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem">
+            Requisitos mínimos
+          </h3>
+          <div class="grid-3">
+            <div class="feature-card">
+              <div
+                class="f-icon"
+                style="background: var(--accent-glow); color: var(--accent2)"
+              >
+                <i class="fab fa-rust"></i>
+              </div>
+              <h4>Rust 1.70+</h4>
+              <p>
+                Toolchain completa con rustup. Binario único y optimizado con
+                LTO.
+              </p>
+            </div>
+            <div class="feature-card">
+              <div
+                class="f-icon"
+                style="background: var(--violet-glow); color: var(--violet)"
+              >
+                <i class="fas fa-microchip"></i>
+              </div>
+              <h4>~3 MB en disco</h4>
+              <p>
+                Binario release optimizado con LTO, strip y panic=abort. Consumo
+                mínimo de RAM incluso con archivos de GB.
+              </p>
+            </div>
+            <div class="feature-card">
+              <div
+                class="f-icon"
+                style="background: var(--green-glow); color: var(--green)"
+              >
+                <i class="fas fa-box"></i>
+              </div>
+              <h4>unrar (optativo)</h4>
+              <p>
+                Solo si quieres extraer archivos .rar. CsZip delega en unrar del
+                sistema.
+              </p>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top: 1rem">
+            <h4><i class="fas fa-folder-tree"></i> ¿Dónde se instala?</h4>
+            <div class="prose" style="margin-top: 0.5rem">
+              <ul>
+                <li>
+                  <strong>Binario:</strong>
+                  <code>~/.cargo/bin/cszip</code>
+                </li>
+                <li>
+                  <strong>Scripts:</strong>
+                  <code>scripts/dev.sh</code>, <code>scripts/build.sh</code>
+                </li>
+                <li>
+                  <strong>Logs:</strong> vía <code>RUST_LOG</code> a stderr
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===================== PRIMEROS PASOS ===================== -->
+        <section class="section anim-fade-in" id="primeros-pasos">
+          <h2 class="section-heading">
+            <span class="icon"><i class="fas fa-play"></i></span>
+            Primeros Pasos
+          </h2>
+          <p class="section-subtitle">
+            De cero a tu primer archivo comprimido en 30 segundos.
+          </p>
+
+          <div style="counter-reset: step">
+            <div class="card" style="position: relative; padding-left: 3.5rem">
+              <span
+                style="
+                  position: absolute;
+                  left: 1.25rem;
+                  top: 1.5rem;
+                  width: 28px;
+                  height: 28px;
+                  border-radius: 8px;
+                  background: var(--accent-glow);
+                  color: var(--accent2);
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  font-weight: 700;
+                  font-size: 0.875rem;
+                "
+                >1</span
+              >
+              <h4>Comprime un archivo</h4>
+              <p>Usa LZ77+Huffman para comprimir a formato .cz nativo.</p>
+              <div
+                class="cmd-block"
+                onclick="copyCmd(this)"
+                style="margin-top: 0.5rem"
+              >
+                <span class="prompt">$</span>
+                <span class="cmd">cszip compress datos.bin</span>
+                <span
+                  style="
+                    margin-left: auto;
+                    color: var(--text-muted);
+                    font-size: 0.75rem;
+                  "
+                  ><i class="fas fa-copy"></i
+                ></span>
+              </div>
+            </div>
+
+            <div class="card" style="position: relative; padding-left: 3.5rem">
+              <span
+                style="
+                  position: absolute;
+                  left: 1.25rem;
+                  top: 1.5rem;
+                  width: 28px;
+                  height: 28px;
+                  border-radius: 8px;
+                  background: var(--accent-glow);
+                  color: var(--accent2);
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  font-weight: 700;
+                  font-size: 0.875rem;
+                "
+                >2</span
+              >
+              <h4>Verifica integridad</h4>
+              <p>Revisa checksums CRC-32, CRC-64 y ADLER-32 del archivo .cz.</p>
+              <div
+                class="cmd-block"
+                onclick="copyCmd(this)"
+                style="margin-top: 0.5rem"
+              >
+                <span class="prompt">$</span>
+                <span class="cmd">cszip verify datos.bin.cz</span>
+                <span
+                  style="
+                    margin-left: auto;
+                    color: var(--text-muted);
+                    font-size: 0.75rem;
+                  "
+                  ><i class="fas fa-copy"></i
+                ></span>
+              </div>
+            </div>
+
+            <div class="card" style="position: relative; padding-left: 3.5rem">
+              <span
+                style="
+                  position: absolute;
+                  left: 1.25rem;
+                  top: 1.5rem;
+                  width: 28px;
+                  height: 28px;
+                  border-radius: 8px;
+                  background: var(--accent-glow);
+                  color: var(--accent2);
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  font-weight: 700;
+                  font-size: 0.875rem;
+                "
+                >3</span
+              >
+              <h4>Inspecciona metadatos</h4>
+              <p>Muestra bloques, niveles de compresión y checksums.</p>
+              <div
+                class="cmd-block"
+                onclick="copyCmd(this)"
+                style="margin-top: 0.5rem"
+              >
+                <span class="prompt">$</span>
+                <span class="cmd">cszip info datos.bin.cz</span>
+                <span
+                  style="
+                    margin-left: auto;
+                    color: var(--text-muted);
+                    font-size: 0.75rem;
+                  "
+                  ><i class="fas fa-copy"></i
+                ></span>
+              </div>
+            </div>
+
+            <div class="card" style="position: relative; padding-left: 3.5rem">
+              <span
+                style="
+                  position: absolute;
+                  left: 1.25rem;
+                  top: 1.5rem;
+                  width: 28px;
+                  height: 28px;
+                  border-radius: 8px;
+                  background: var(--accent-glow);
+                  color: var(--accent2);
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  font-weight: 700;
+                  font-size: 0.875rem;
+                "
+                >4</span
+              >
+              <h4>Descomprime</h4>
+              <p>Extrae formato .cz nativo, .zip estándar o .rar vía unrar.</p>
+              <div
+                class="cmd-block"
+                onclick="copyCmd(this)"
+                style="margin-top: 0.5rem"
+              >
+                <span class="prompt">$</span>
+                <span class="cmd">cszip decompress datos.bin.cz</span>
+                <span
+                  style="
+                    margin-left: auto;
+                    color: var(--text-muted);
+                    font-size: 0.75rem;
+                  "
+                  ><i class="fas fa-copy"></i
+                ></span>
+              </div>
+            </div>
+
+            <div class="card" style="position: relative; padding-left: 3.5rem">
+              <span
+                style="
+                  position: absolute;
+                  left: 1.25rem;
+                  top: 1.5rem;
+                  width: 28px;
+                  height: 28px;
+                  border-radius: 8px;
+                  background: var(--accent-glow);
+                  color: var(--accent2);
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  font-weight: 700;
+                  font-size: 0.875rem;
+                "
+                >5</span
+              >
+              <h4>Lista bloques</h4>
+              <p>
+                Muestra la tabla de bloques y ratios de compresión detallados.
+              </p>
+              <div
+                class="cmd-block"
+                onclick="copyCmd(this)"
+                style="margin-top: 0.5rem"
+              >
+                <span class="prompt">$</span>
+                <span class="cmd">cszip list datos.bin.cz</span>
+                <span
+                  style="
+                    margin-left: auto;
+                    color: var(--text-muted);
+                    font-size: 0.75rem;
+                  "
+                  ><i class="fas fa-copy"></i
+                ></span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===================== FEATURES ===================== -->
+        <section class="section anim-fade-in" id="features">
+          <h2 class="section-heading">
+            <span class="icon"><i class="fas fa-list-check"></i></span>
+            Funcionalidades
+          </h2>
+          <p class="section-subtitle">
+            Todo lo que necesitas para comprimir, verificar y convertir archivos
+            desde la terminal.
+          </p>
+
+          <div class="showcase" style="margin-bottom: 1.5rem">
+            <div class="showcase-card">
+              <div class="sc-header">
+                <span class="sc-dot" style="background: var(--accent2)"></span>
+                <span class="sc-dot" style="background: var(--rose)"></span>
+                <span class="sc-dot" style="background: var(--green)"></span>
+                <span
+                  style="
+                    font-size: 0.75rem;
+                    color: var(--text-muted);
+                    margin-left: auto;
+                  "
+                  >compresión</span
+                >
+              </div>
+              <pre><code><span style="color:var(--green);">$</span> <span style="color:var(--text-primary);">cszip compress -l 9 datos.txt</span>
+<span style="color:var(--accent2);">Compressing</span>  datos.txt  <span style="color:var(--green);">✓</span>
+<span style="color:var(--text-muted);">blocks:      12</span>
+<span style="color:var(--text-muted);">original:    42.3 MB</span>
+<span style="color:var(--text-muted);">compressed:  15.1 MB</span>
+<span style="color:var(--text-muted);">ratio:       35.6%</span></code></pre>
+            </div>
+            <div class="showcase-card">
+              <div class="sc-header">
+                <span class="sc-dot" style="background: var(--accent2)"></span>
+                <span class="sc-dot" style="background: var(--rose)"></span>
+                <span class="sc-dot" style="background: var(--green)"></span>
+                <span
+                  style="
+                    font-size: 0.75rem;
+                    color: var(--text-muted);
+                    margin-left: auto;
+                  "
+                  >verificación</span
+                >
+              </div>
+              <pre><code><span style="color:var(--green);">$</span> <span style="color:var(--text-primary);">cszip verify datos.bin.cz</span>
+<span style="color:var(--accent2);">File Header</span>    <span style="color:var(--green);">✓</span>
+<span style="color:var(--accent2);">Block  0/12</span>   <span style="color:var(--green);">✓</span>  CRC-32  CRC-64  ADLER-32
+<span style="color:var(--accent2);">Block  1/12</span>   <span style="color:var(--green);">✓</span>
+<span style="color:var(--accent2);">...</span>
+<span style="color:var(--accent2);">File Footer</span>   <span style="color:var(--green);">✓</span>  CRC-64 global
+<span style="color:var(--green);">✅ Integridad verificada</span></code></pre>
+            </div>
+          </div>
+
+          <div class="grid-2" style="margin-bottom: 1.5rem">
+            <div class="feature-card">
+              <div
+                class="f-icon"
+                style="background: var(--accent-glow); color: var(--accent2)"
+              >
+                <i class="fas fa-compress"></i>
+              </div>
+              <h4>Compresión LZ77+Huffman</h4>
+              <p>
+                Algoritmo nativo de compresión sin pérdida. 9 niveles de
+                compresión (0-9) para balancear velocidad y ratio.
+              </p>
+            </div>
+            <div class="feature-card">
+              <div
+                class="f-icon"
+                style="background: var(--rose-glow); color: var(--rose)"
+              >
+                <i class="fas fa-file-zipper"></i>
+              </div>
+              <h4>Soporte ZIP nativo</h4>
+              <p>
+                Lee y escribe archivos .zip usando la crate <code>zip</code> con
+                compresión deflate. Intercambiable con formato .cz.
+              </p>
+            </div>
+            <div class="feature-card">
+              <div
+                class="f-icon"
+                style="background: var(--green-glow); color: var(--green)"
+              >
+                <i class="fas fa-file-archive"></i>
+              </div>
+              <h4>Extracción RAR</h4>
+              <p>
+                Descomprime .rar delegando en <code>unrar</code> del sistema.
+                Integración segura con subprocesos.
+              </p>
+            </div>
+            <div class="feature-card">
+              <div
+                class="f-icon"
+                style="background: var(--violet-glow); color: var(--violet)"
+              >
+                <i class="fas fa-shield"></i>
+              </div>
+              <h4>Verificación triple</h4>
+              <p>
+                CRC-32, CRC-64 y ADLER-32 por bloque más CRC-64 global.
+                Protección activa contra zip bombs.
+              </p>
+            </div>
+            <div class="feature-card">
+              <div
+                class="f-icon"
+                style="background: var(--accent-glow); color: var(--accent2)"
+              >
+                <i class="fas fa-water"></i>
+              </div>
+              <h4>Streaming por bloques</h4>
+              <p>
+                Procesa archivos de gigabytes con memoria constante. E/S
+                bufferizada sin cargar todo en RAM.
+              </p>
+            </div>
+            <div class="feature-card">
+              <div
+                class="f-icon"
+                style="background: var(--rose-glow); color: var(--rose)"
+              >
+                <i class="fas fa-globe"></i>
+              </div>
+              <h4>Portabilidad universal</h4>
+              <p>
+                Linux, macOS y Windows. Instaladores para Ubuntu, Debian,
+                Fedora, RHEL, Arch y más.
+              </p>
+            </div>
+          </div>
+
+          <h3
+            style="font-size: 1.1rem; font-weight: 600; margin: 1.5rem 0 1rem"
+          >
+            Modos disponibles
+          </h3>
+          <div class="grid-2">
+            <div
+              class="card"
+              style="margin: 0; border-left: 3px solid var(--accent2)"
+            >
+              <h4><span class="tag tag-cyan">compress</span> Comprimir</h4>
+              <p>
+                Comprime a formato .cz (nativo) o .zip. Niveles 0-9, algoritmo
+                LZ77+Huffman o STORE.
+              </p>
+            </div>
+            <div
+              class="card"
+              style="margin: 0; border-left: 3px solid var(--green)"
+            >
+              <h4>
+                <span class="tag tag-green">decompress</span> Descomprimir
+              </h4>
+              <p>
+                Extrae .cz, .zip y .rar. Output personalizado con
+                <code>-o</code>, sobrescritura con <code>-f</code>.
+              </p>
+            </div>
+            <div
+              class="card"
+              style="margin: 0; border-left: 3px solid var(--rose)"
+            >
+              <h4><span class="tag tag-rose">verify</span> Verificar</h4>
+              <p>
+                Revisa checksums de cada bloque más footer global. Salta
+                verificación con <code>--no-verify</code>.
+              </p>
+            </div>
+            <div
+              class="card"
+              style="margin: 0; border-left: 3px solid var(--violet)"
+            >
+              <h4>
+                <span class="tag tag-violet">info / list</span> Inspeccionar
+              </h4>
+              <p>
+                <code>info</code> muestra metadatos detallados.
+                <code>list</code> tabla de bloques con ratios de compresión.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===================== COMANDOS ===================== -->
+        <section class="section anim-fade-in" id="comandos">
+          <h2 class="section-heading">
+            <span class="icon"><i class="fas fa-terminal"></i></span>
+            Comandos
+          </h2>
+          <p class="section-subtitle">
+            Referencia completa de todo lo que puedes hacer desde la CLI.
+          </p>
+
+          <div class="showcase" style="margin-bottom: 1.5rem">
+            <div class="showcase-card">
+              <div class="sc-header">
+                <span class="sc-dot" style="background: var(--accent2)"></span>
+                <span class="sc-dot" style="background: var(--rose)"></span>
+                <span class="sc-dot" style="background: var(--green)"></span>
+                <span
+                  style="
+                    font-size: 0.75rem;
+                    color: var(--text-muted);
+                    margin-left: auto;
+                  "
+                  >compresión avanzada</span
+                >
+              </div>
+              <pre><code><span style="color:var(--green);">$</span> <span style="color:var(--text-primary);">cszip compress -l 9 archivo.txt</span>
+<span style="color:var(--green);">$</span> <span style="color:var(--text-primary);">cszip compress -a lz77-huffman datos.bin</span>
+<span style="color:var(--green);">$</span> <span style="color:var(--text-primary);">cszip compress -o backup.zip datos.bin</span>
+<span style="color:var(--green);">$</span> <span style="color:var(--text-primary);">cszip compress -f archivo.txt</span>
+
+<span style="color:var(--green);">$</span> <span style="color:var(--text-primary);">cszip decompress archivo.cz -o salida.txt</span>
+<span style="color:var(--green);">$</span> <span style="color:var(--text-primary);">cszip decompress -f backup.zip</span>
+<span style="color:var(--green);">$</span> <span style="color:var(--text-primary);">cszip decompress --no-verify archivo.cz</span></code></pre>
+            </div>
+            <div class="showcase-card">
+              <div class="sc-header">
+                <span class="sc-dot" style="background: var(--accent2)"></span>
+                <span class="sc-dot" style="background: var(--rose)"></span>
+                <span class="sc-dot" style="background: var(--green)"></span>
+                <span
+                  style="
+                    font-size: 0.75rem;
+                    color: var(--text-muted);
+                    margin-left: auto;
+                  "
+                  >multi-formato</span
+                >
+              </div>
+              <pre><code><span style="color:var(--green);">$</span> <span style="color:var(--text-primary);">cszip decompress backup.zip</span>
+<span style="color:var(--green);">$</span> <span style="color:var(--text-primary);">cszip decompress backup.rar</span>
+<span style="color:var(--green);">$</span> <span style="color:var(--text-primary);">cszip compress datos.bin -o d.zip</span>
+<span style="color:var(--green);">$</span> <span style="color:var(--text-primary);">cszip verify datos.bin.cz</span>
+<span style="color:var(--green);">$</span> <span style="color:var(--text-primary);">cszip info datos.bin.cz</span></code></pre>
+            </div>
+          </div>
+
+          <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem">
+            Resumen de comandos
+          </h3>
+          <div class="table-wrap" style="margin-bottom: 1rem">
+            <table>
+              <thead>
+                <tr>
+                  <th>Comando</th>
+                  <th>Alias</th>
+                  <th>Descripción</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>cszip compress &lt;archivo&gt;</code></td>
+                  <td><code>c</code></td>
+                  <td>
+                    Comprime (autodetecta .zip si <code>-o</code> termina en
+                    .zip)
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>cszip decompress &lt;archivo&gt;</code></td>
+                  <td><code>d</code></td>
+                  <td>Descomprime .cz / .zip / .rar</td>
+                </tr>
+                <tr>
+                  <td><code>cszip verify &lt;archivo.cz&gt;</code></td>
+                  <td><code>v</code></td>
+                  <td>Verifica integridad (checksums)</td>
+                </tr>
+                <tr>
+                  <td><code>cszip info &lt;archivo.cz&gt;</code></td>
+                  <td><code>i</code></td>
+                  <td>Metadatos detallados del archivo</td>
+                </tr>
+                <tr>
+                  <td><code>cszip list &lt;archivo.cz&gt;</code></td>
+                  <td><code>l</code></td>
+                  <td>Tabla de bloques y ratios</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3
+            style="font-size: 1.1rem; font-weight: 600; margin: 1.5rem 0 1rem"
+          >
+            Opciones de compresión
+          </h3>
+          <div class="table-wrap" style="margin-bottom: 1rem">
+            <table>
+              <thead>
+                <tr>
+                  <th>Opción</th>
+                  <th>Descripción</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>-l, --level &lt;N&gt;</code></td>
+                  <td>Nivel de compresión 0-9 (default: 6)</td>
+                </tr>
+                <tr>
+                  <td><code>-a, --algorithm &lt;algo&gt;</code></td>
+                  <td>
+                    Algoritmo: <code>lz77-huffman</code> | <code>store</code>
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>-o, --output &lt;archivo&gt;</code></td>
+                  <td>Nombre de archivo de salida personalizado</td>
+                </tr>
+                <tr>
+                  <td><code>-f, --force</code></td>
+                  <td>Sobrescribir si el archivo destino existe</td>
+                </tr>
+                <tr>
+                  <td><code>--no-verify</code></td>
+                  <td>Saltar verificación de checksums (más rápido)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ===================== FORMATO .cz ===================== -->
+        <section class="section anim-fade-in" id="formato">
+          <h2 class="section-heading">
+            <span class="icon"><i class="fas fa-cube"></i></span>
+            Formato .cz
+          </h2>
+          <p class="section-subtitle">
+            Estructura binaria del formato nativo de CsZip.
+          </p>
+
+          <div class="format-diagram">
+            <div class="format-box accent glow-pulse">
+              <i class="fas fa-file"></i>&nbsp; File Header (16 bytes)
+              <div
+                style="
+                  font-size: 0.7rem;
+                  font-weight: 400;
+                  color: var(--text-muted);
+                  margin-top: 2px;
+                "
+              >
+                Magic 0x435A · versión · algoritmo · flags
+              </div>
+            </div>
+            <div class="format-arrow"><i class="fas fa-arrow-down"></i></div>
+            <div class="format-row">
+              <div class="format-box">
+                <i class="fas fa-cube"></i>&nbsp; Block 0
+                <div
+                  style="
+                    font-size: 0.7rem;
+                    font-weight: 400;
+                    color: var(--text-muted);
+                  "
+                >
+                  Header 12B + datos + CRC-32/CRC-64/ADLER-32
+                </div>
+              </div>
+              <div class="format-box">
+                <i class="fas fa-cube"></i>&nbsp; Block 1
+              </div>
+              <div class="format-box rose">
+                <i class="fas fa-ellipsis-h"></i>&nbsp; ...
+              </div>
+            </div>
+            <div class="format-arrow"><i class="fas fa-arrow-down"></i></div>
+            <div
+              class="format-box"
+              style="
+                border-color: var(--violet);
+                background: var(--violet-glow);
+              "
+            >
+              <i class="fas fa-check-circle"></i>&nbsp; File Footer (12 bytes)
+              <div
+                style="
+                  font-size: 0.7rem;
+                  font-weight: 400;
+                  color: var(--text-muted);
+                  margin-top: 2px;
+                "
+              >
+                Marker 0xFE · nº bloques · tamaño · CRC-64 global
+              </div>
+            </div>
+          </div>
+
+          <div class="prose" style="margin-top: 1.5rem">
+            <p>
+              El formato .cz está diseñado para streaming seguro. Cada bloque se
+              verifica individualmente y el footer contiene un checksum global
+              que detecta truncamientos o corrupción. La especificación completa
+              está en <code>FORMAT.md</code>.
+            </p>
+            <h4>Seguridad integrada</h4>
+            <ul>
+              <li>Triple checksum por bloque (CRC-32, CRC-64, ADLER-32)</li>
+              <li>CRC-64 global en el footer de archivo</li>
+              <li>
+                Protección activa contra zip bombs (denegación de servicio)
+              </li>
+              <li>Validación redundante en cada operación de descompresión</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- ===================== CONFIG ===================== -->
+        <section class="section anim-fade-in" id="config">
+          <h2 class="section-heading">
+            <span class="icon"><i class="fas fa-cog"></i></span>
+            Configuración
+          </h2>
+          <p class="section-subtitle">
+            Variables de entorno para personalizar el comportamiento.
+          </p>
+
+          <div class="card" style="border-left: 3px solid var(--accent)">
+            <h4><i class="fas fa-sliders"></i> Nivel de compresión</h4>
+            <p>
+              El nivel por defecto es 6. Puedes cambiarlo siempre con
+              <code>-l</code>. Nivel 0 = STORE (sin compresión), nivel 9 =
+              máxima compresión.
+            </p>
+          </div>
+
+          <div class="card">
+            <h4><i class="fas fa-microchip"></i> Rendimiento</h4>
+            <p>
+              El procesamiento por bloques mantiene el uso de memoria constante.
+              Para archivos muy grandes, CsZip usa E/S bufferizada con buffers
+              de tamaño configurable.
+            </p>
+          </div>
+
+          <div class="card">
+            <h4><i class="fas fa-shield"></i> Verificación</h4>
+            <p>
+              Por defecto toda descompresión verifica checksums. Puedes saltar
+              este paso con <code>--no-verify</code> para máximo rendimiento
+              cuando la integridad no es crítica.
+            </p>
+          </div>
+        </section>
+
+        <!-- ===================== ENV VARS ===================== -->
+        <section class="section anim-fade-in" id="env-vars">
+          <h2 class="section-heading">
+            <span class="icon"><i class="fas fa-tag"></i></span>
+            Variables de Entorno
+          </h2>
+          <p class="section-subtitle">
+            Controla el comportamiento de CsZip desde el entorno.
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Variable</th>
+                  <th>Descripción</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>RUST_LOG</code></td>
+                  <td>
+                    Nivel de log (error, warn, info, debug, trace). Los logs van
+                    a stderr.
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>CSZIP_BUFFER_SIZE</code></td>
+                  <td>Tamaño del buffer de E/S en bytes (default: 65536).</td>
+                </tr>
+                <tr>
+                  <td><code>CSZIP_NO_COLOR</code></td>
+                  <td>
+                    <code>1</code> para deshabilitar colores en la salida.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ===================== FAQ ===================== -->
+        <section class="section anim-fade-in" id="faq">
+          <h2 class="section-heading">
+            <span class="icon"><i class="fas fa-question-circle"></i></span>
+            FAQ
+          </h2>
+          <p class="section-subtitle">Respuestas rápidas a dudas frecuentes.</p>
+
+          <div class="card" style="border-left: 3px solid var(--accent2)">
+            <h4>
+              <i
+                class="fas fa-chevron-right"
+                style="color: var(--accent2); font-size: 0.75rem"
+              ></i>
+              ¿Qué diferencia a .cz de .zip?
+            </h4>
+            <p>
+              .cz es un formato con verificación de integridad por bloque
+              (triple checksum), streaming y protección anti zip bombs. ZIP es
+              el estándar universal — CsZip soporta ambos.
+            </p>
+          </div>
+
+          <div class="card">
+            <h4>
+              <i
+                class="fas fa-chevron-right"
+                style="color: var(--accent2); font-size: 0.75rem"
+              ></i>
+              ¿CsZip puede abrir archivos .zip existentes?
+            </h4>
+            <p>
+              Sí, CsZip lee y escribe archivos .zip nativamente usando la crate
+              <code>zip</code> con compresión deflate. También extrae .rar
+              delegando en <code>unrar</code> del sistema.
+            </p>
+          </div>
+          <div class="card">
+            <h4>
+              <i
+                class="fas fa-chevron-right"
+                style="color: var(--accent2); font-size: 0.75rem"
+              ></i>
+              ¿Qué tan seguro es el formato .cz?
+            </h4>
+            <p>
+              Cada bloque lleva CRC-32, CRC-64 y ADLER-32. El archivo completo
+              tiene un CRC-64 global en el footer. CsZip también detecta y
+              rechaza zip bombs activamente.
+            </p>
+          </div>
+          <div class="card">
+            <h4>
+              <i
+                class="fas fa-chevron-right"
+                style="color: var(--accent2); font-size: 0.75rem"
+              ></i>
+              ¿Puedo comprimir archivos de varios GB?
+            </h4>
+            <p>
+              Sí. El procesamiento streaming por bloques mantiene la memoria
+              constante. Archivos de varios gigabytes se procesan sin problema
+              en hardware limitado.
+            </p>
+          </div>
+          <div class="card">
+            <h4>
+              <i
+                class="fas fa-chevron-right"
+                style="color: var(--accent2); font-size: 0.75rem"
+              ></i>
+              ¿Necesito pagar algo?
+            </h4>
+            <p>
+              No. CsZip es software libre bajo licencia MIT. Puedes usarlo,
+              modificarlo y redistribuirlo sin restricciones.
+            </p>
+          </div>
+          <div class="card">
+            <h4>
+              <i
+                class="fas fa-chevron-right"
+                style="color: var(--accent2); font-size: 0.75rem"
+              ></i>
+              ¿En qué plataformas corre?
+            </h4>
+            <p>
+              Linux (amd64/arm64), macOS (amd64/arm64) y Windows (amd64/arm64).
+              Instaladores para Ubuntu, Debian, Fedora, RHEL y Arch.
+            </p>
+          </div>
+        </section>
+
+        <!-- FOOTER -->
+        <footer
+          style="
+            border-top: 1px solid var(--border);
+            padding: 2rem 0;
+            margin-top: 3rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.8125rem;
+          "
+        >
+          <p>
+            Hecho con <span style="color: var(--rose)">&#9829;</span> por
+            <a
+              href="https://github.com/2004Style"
+              target="_blank"
+              style="
+                color: var(--accent2);
+                text-decoration: none;
+                font-weight: 600;
+              "
+              >2004Style</a
+            >
+          </p>
+          <p style="margin-top: 0.35rem">
+            <a
+              href="https://github.com/user/CsZip"
+              target="_blank"
+              style="color: var(--text-muted); text-decoration: none"
+            >
+              <i class="fab fa-github"></i> GitHub
+            </a>
+            &nbsp;·&nbsp;
+            <a
+              href="https://github.com/user/CsZip/issues"
+              target="_blank"
+              style="color: var(--text-muted); text-decoration: none"
+            >
+              <i class="fas fa-bug"></i> Reportar bug
+            </a>
+          </p>
+        </footer>
+      </div>
+    </div>
+
+    <script>
+      const themeToggle = document.getElementById("themeToggle");
+      const themeIcon = document.getElementById("themeIcon");
+      const html = document.documentElement;
+      const sidebar = document.getElementById("sidebar");
+      const mobileBtn = document.getElementById("mobileMenuBtn");
+      const sidebarLinks = document.querySelectorAll(".sidebar-link");
+
+      function setTheme(theme) {
+        html.setAttribute("data-theme", theme);
+        themeIcon.className = theme === "dark" ? "fas fa-moon" : "fas fa-sun";
+        localStorage.setItem("theme", theme);
+      }
+
+      const savedTheme = localStorage.getItem("theme") || "dark";
+      setTheme(savedTheme);
+
+      themeToggle.addEventListener("click", () => {
+        setTheme(html.getAttribute("data-theme") === "dark" ? "light" : "dark");
+      });
+
+      mobileBtn.addEventListener("click", () =>
+        sidebar.classList.toggle("open"),
+      );
+
+      sidebarLinks.forEach((link) => {
+        link.addEventListener("click", () => {
+          sidebarLinks.forEach((l) => l.classList.remove("active"));
+          link.classList.add("active");
+          if (window.innerWidth <= 1024) sidebar.classList.remove("open");
+        });
+      });
+
+      const sections = document.querySelectorAll(".section");
+      const sectionObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              const id = entry.target.getAttribute("id");
+              sidebarLinks.forEach((link) => {
+                link.classList.remove("active");
+                if (link.getAttribute("href") === "#" + id)
+                  link.classList.add("active");
+              });
+            }
+          });
+        },
+        { rootMargin: "-80px 0px -60% 0px" },
+      );
+      sections.forEach((s) => sectionObserver.observe(s));
+
+      const animElements = document.querySelectorAll(".anim-fade-in");
+      const animObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) entry.target.classList.add("visible");
+          });
+        },
+        { threshold: 0.08 },
+      );
+      animElements.forEach((el) => animObserver.observe(el));
+
+      function copyCmd(el) {
+        const text = el.querySelector(".cmd").textContent.trim();
+        navigator.clipboard.writeText(text).then(showToast);
+      }
+
+      function copyCode(btn, id) {
+        const el = document.getElementById(id);
+        const text = el.textContent.replace(/^\s*[\w#]\s*/gm, "").trim();
+        navigator.clipboard.writeText(text).then(() => {
+          btn.classList.add("copied");
+          btn.innerHTML = '<i class="fas fa-check"></i>';
+          showToast();
+          setTimeout(() => {
+            btn.classList.remove("copied");
+            btn.innerHTML = '<i class="fas fa-copy"></i>';
+          }, 2000);
+        });
+      }
+
+      function showToast() {
+        const toast = document.getElementById("toast");
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 2000);
+      }
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "t" || e.key === "T") themeToggle.click();
+      });
+
+      console.log(
+        "%c🔥 CsZip",
+        "font-size:22px;font-weight:800;color:#22d36e;",
+      );
+      console.log(
+        "%cCompresión sin pérdida desde la terminal",
+        "font-size:13px;color:#94a894;",
+      );
+    </script>
+  </body>
+</html>
