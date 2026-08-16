@@ -161,6 +161,45 @@ src/
 
 ---
 
+## Publicar una Release
+
+El flujo de lanzamiento ([`.github/workflows/release.yml`](.github/workflows/release.yml)) se activa automáticamente al empujar un **tag** con formato `vX.Y.Z` (o `vX.Y.Z-alpha./beta./rc.`). No se dispara con commits normales a `main`.
+
+**Qué hace el workflow:**
+
+1. Compila el binario para 5 plataformas (`linux-x86_64`, `linux-x86_64-musl`, `macos-x86_64`, `macos-aarch64`, `windows-x86_64`).
+2. Ejecuta los tests y empaqueta binario + `README.md` + `LICENSE` en un archivo `cszip-vX.Y.Z-<plataforma>.tar.gz|zip`.
+3. Sube los paquetes a **Cloudflare R2** bajo `releases/vX.Y.Z/`.
+4. Genera un `manifest.json` con metadata (sha256, tamaño, commit, tag) y notifica a la **API de ConvertSystems**.
+
+**Requisitos (secrets del repositorio):**
+
+| Secret | Uso |
+|--------|-----|
+| `R2_ACCESS_KEY_ID` | Credenciales de Cloudflare R2 |
+| `R2_SECRET_ACCESS_KEY` | Credenciales de Cloudflare R2 |
+| `R2_BUCKET_NAME` | Bucket de destino |
+| `R2_ACCOUNT_ID` | Cuenta de Cloudflare R2 |
+| `CONVERTSYSTEMS_API_URL` | URL base de la API de ConvertSystems |
+| `CONVERTSYSTEMS_GITHUB_UPLOAD_TOKEN` | Token de autenticación ante ConvertSystems |
+
+**Cómo lanzar una versión:**
+
+1. Actualiza `version` en [`Cargo.toml`](Cargo.toml) al número deseado (ej. `0.0.1`).
+2. Confirma y empuja el cambio.
+3. Crea y empuja el tag (debe coincidir con la versión de `Cargo.toml`):
+
+```bash
+git tag v0.0.1
+git push origin v0.0.1
+```
+
+4. Monitorea el run en **Actions → Release**. Si algún paso falla, el run se marca en rojo con el log del error.
+
+> Nota: el proyecto **no publica a crates.io**; la distribución se realiza exclusivamente vía R2 + la API de ConvertSystems.
+
+---
+
 ## Licencia
 
 MIT — ver [LICENSE](LICENSE).
