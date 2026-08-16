@@ -2,6 +2,7 @@
 name = "cszip"
 version = "0.0.1"
 edition = "2021"
+rust-version = "1.85"
 authors = ["Developer <dev@example.com>"]
 description = "High-performance lossless file compression tool with custom format (.cz)"
 license = "MIT"
