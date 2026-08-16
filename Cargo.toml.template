@@ -1,6 +1,6 @@
 ﻿[package]
 name = "cszip"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2021"
 authors = ["Tu Nombre <tu.email@example.com>"]
 description = "High-performance lossless file compression tool with custom format"

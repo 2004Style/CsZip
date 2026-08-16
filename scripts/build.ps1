@@ -29,7 +29,7 @@ switch -regex ($arch) {
 }
 
 $version = Select-String -Path .\Cargo.toml -Pattern '^version = ' | Select-Object -First 1 | ForEach-Object { $_.Matches.Value -replace '^version = "', '' -replace '"$', '' }
-if (-not $version) { $version = "0.1.0" }
+if (-not $version) { $version = "0.0.1" }
 
 $releaseName = "cszip-windows-$archName"
 $archiveName = "$releaseName.zip"
